@@ -70,13 +70,16 @@ to_SingleCellExperiment <- function(object) { # nolint
     row.names = object$var_names
   )
 
+  # construct uns
+  # trackstatus: class=SingleCellExperiment, feature=get_metadata, status=done
+  meta_data <- object$uns
+
   # construct output object
   sce <- SingleCellExperiment::SingleCellExperiment(
     assays = assays,
     colData = col_data,
     rowData = row_data,
-    metadata = list(),
-    ## FIXME: assign object$uns to metadata
+    metadata = meta_data,
     checkDimnames = TRUE
   )
 
