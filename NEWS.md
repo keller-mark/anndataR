@@ -1,5 +1,10 @@
 # anndataR unreleased
 
+## New functionality
+
+* Implemented an `AnnDataView` class, which provides a lazy view of an `AnnData` object without copying data (PR #1096)
+* Implemented S3 methods for `AbstractAnnData` objects: `dim`, `nrow`, `ncol`, `dimnames`, `rownames`, `colnames`, and `[` (PR #1096)
+
 ## Major changes
 
 - Refactor obs/var_names handling for improved data consistency (PR #328)
