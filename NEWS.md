@@ -43,6 +43,8 @@
   - Now properly expands loadings matrix to include all genes with zeros for
     non-variable features
   - Adds warning when rownames don't match var_names during conversion
+- Avoid writing character datasets to H5AD files with LZF compression as it
+  causes R to crash (PR #356)
 
 ## Documentation
 
