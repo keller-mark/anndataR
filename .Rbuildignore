@@ -10,8 +10,7 @@
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
-^vignettes/diagrams/*\.mmd$
-^vignettes/diagrams/*\.svg$
-^vignettes/software_design\.Rmd$
-^vignettes/development_status\.Rmd$
-^vignettes/data/*\.h5ad$
+^vignettes/articles$
+^doc$
+^Meta$
+^man/figures/*\.svg$
