@@ -52,6 +52,9 @@
   - Adds warning when rownames don't match var_names during conversion
 - Avoid writing character datasets to H5AD files with LZF compression as it
   causes R to crash (PR #356)
+- Handle slots that may have incomplete dimensions when converting from
+  `Seurat`. These are now skipped with a warning instead of indirectly raising
+  an error. (PR #369)
 
 ## Documentation
 
