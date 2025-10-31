@@ -1,7 +1,7 @@
 \name{NEWS}
 \title{News for Package \pkg{anndataR}}
 
-\section{Version 1.0.0, Bioconductor 3.32 Release (October 2025)}{
+\section{Version 1.0.0, Bioconductor 3.22 Release (October 2025)}{
   \subsection{Introducing anndataR!}{
     \itemize{
       \item{
