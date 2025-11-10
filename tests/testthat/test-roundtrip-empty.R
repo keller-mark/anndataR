@@ -1,11 +1,6 @@
-skip_if_no_anndata()
-skip_if_not_installed("reticulate")
+skip_if_no_anndata_py()
 
 library(reticulate)
-testthat::skip_if_not(
-  reticulate::py_module_available("dummy_anndata"),
-  message = "Python dummy_anndata module not available for testing"
-)
 
 ad <- reticulate::import("anndata", convert = FALSE)
 bi <- reticulate::import_builtins()
@@ -27,6 +22,8 @@ file_r <- withr::local_file(
 
 # write to file
 adata_py$write_h5ad(file_py)
+# Read it back in to get the version as read from disk
+adata_py <- ad$read_h5ad(file_py)
 
 test_that(paste0("Reading an AnnData with layer '", name, "' works"), {
   msg <- message_if_known(
@@ -38,17 +35,20 @@ test_that(paste0("Reading an AnnData with layer '", name, "' works"), {
   )
   skip_if(!is.null(msg), message = msg)
 
-  adata_r <- read_h5ad(file_py, to = "HDF5AnnData")
+  adata_r <- read_h5ad(file_py, as = "HDF5AnnData")
   expect_equal(
     adata_r$shape(),
     unlist(reticulate::py_to_r(adata_py$shape))
   )
 
-  # check that the print output is the same
+  # check that the print output is the same (normalize class names)
   str_r <- capture.output(print(adata_r))
   str_py <- capture.output(print(adata_py))
+  str_r <- gsub("[^ ]*AnnData", "AnnData", str_r)
   expect_equal(str_r, str_py)
 })
+
+gc()
 
 test_that(paste0("Writing an AnnData with layer '", name, "' works"), {
   msg <- message_if_known(
@@ -60,7 +60,7 @@ test_that(paste0("Writing an AnnData with layer '", name, "' works"), {
   )
   skip_if(!is.null(msg), message = msg)
 
-  adata_r <- read_h5ad(file_py, to = "InMemoryAnnData")
+  adata_r <- read_h5ad(file_py, as = "InMemoryAnnData")
   write_h5ad(adata_r, file_r)
 
   # read from file

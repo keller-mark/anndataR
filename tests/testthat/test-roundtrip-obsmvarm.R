@@ -1,11 +1,7 @@
-skip_if_no_anndata()
-skip_if_not_installed("reticulate")
+skip_if_no_anndata_py()
+skip_if_no_dummy_anndata()
 
 library(reticulate)
-testthat::skip_if_not(
-  reticulate::py_module_available("dummy_anndata"),
-  message = "Python dummy_anndata module not available for testing"
-)
 
 ad <- reticulate::import("anndata", convert = FALSE)
 da <- reticulate::import("dummy_anndata", convert = FALSE)
@@ -60,6 +56,8 @@ for (name in test_names) {
 
   # write to file
   adata_py$write_h5ad(file_py)
+  # Read it back in to get the version as read from disk
+  adata_py <- ad$read_h5ad(file_py)
 
   test_that(
     paste0("Reading an AnnData with obsm and varm '", name, "' works"),
@@ -73,7 +71,7 @@ for (name in test_names) {
       )
       skip_if(!is.null(msg), message = msg)
 
-      adata_r <- read_h5ad(file_py, to = "HDF5AnnData")
+      adata_r <- read_h5ad(file_py, as = "HDF5AnnData")
       expect_equal(
         adata_r$shape(),
         unlist(reticulate::py_to_r(adata_py$shape))
@@ -87,14 +85,14 @@ for (name in test_names) {
         bi$list(adata_py$varm$keys())
       )
 
-      # check that the print output is the same
+      # check that the print output is the same (normalize class names)
       str_r <- capture.output(print(adata_r))
       str_py <- capture.output(print(adata_py))
+      str_r <- gsub("[^ ]*AnnData", "AnnData", str_r)
       expect_equal(str_r, str_py)
     }
   )
 
-  # maybe this test simply shouldn't be run if there is a known issue with reticulate
   test_that(
     paste0(
       "Comparing an anndata with obsm and varm '",
@@ -111,20 +109,35 @@ for (name in test_names) {
       )
       skip_if(!is.null(msg), message = msg)
 
-      adata_r <- read_h5ad(file_py, to = "HDF5AnnData")
+      adata_r <- read_h5ad(file_py, as = "HDF5AnnData")
+
+      # R AnnData now adds dimnames on-the-fly, but Python doesn't preserve them
+      # So we need to strip dimnames for comparison
+      actual_obsm <- adata_r$obsm[[name]]
+      expected_obsm <- py_to_r(py_get_item(adata_py$obsm, name))
+      dimnames(actual_obsm) <- NULL
+      dimnames(expected_obsm) <- NULL
 
       expect_equal(
-        adata_r$obsm[[name]],
-        py_to_r(py_get_item(adata_py$obsm, name)),
+        actual_obsm,
+        expected_obsm,
         tolerance = 1e-6
       )
+
+      actual_varm <- adata_r$varm[[name]]
+      expected_varm <- py_to_r(py_get_item(adata_py$varm, name))
+      dimnames(actual_varm) <- NULL
+      dimnames(expected_varm) <- NULL
+
       expect_equal(
-        adata_r$varm[[name]],
-        py_to_r(py_get_item(adata_py$varm, name)),
+        actual_varm,
+        expected_varm,
         tolerance = 1e-6
       )
     }
   )
+
+  gc()
 
   test_that(
     paste0("Writing an AnnData with obsm and varm '", name, "' works"),
@@ -138,7 +151,7 @@ for (name in test_names) {
       )
       skip_if(!is.null(msg), message = msg)
 
-      adata_r <- read_h5ad(file_py, to = "InMemoryAnnData")
+      adata_r <- read_h5ad(file_py, as = "InMemoryAnnData")
       write_h5ad(adata_r, file_r)
 
       # read from file
@@ -169,7 +182,7 @@ for (name in test_names) {
   skip_if_no_h5diff()
   # Get all R datatypes that are equivalent to the python datatype (name)
   res <- Filter(function(x) x[[1]] == name, all_equivalences)
-  r_datatypes <- sapply(res, function(x) x[[2]])
+  r_datatypes <- vapply(res, function(x) x[[2]], character(1))
 
   for (r_name in r_datatypes) {
     test_msg <- paste0(
@@ -196,13 +209,16 @@ for (name in test_names) {
         obsm_types = list(r_name),
         varm_types = list(r_name)
       )
-      write_h5ad(adata_r, file_r2)
+      write_h5ad(adata_r, file_r2, mode = "w")
+
+      # Remove the rhdf5-NA.OK for comparison
+      hdf5_clear_rhdf5_attributes(file_r2, paste0("/obsm/", r_name))
 
       # run h5diff
       res_obsm <- processx::run(
         "h5diff",
         c(
-          "-v",
+          "-v2",
           file_py,
           file_r2,
           paste0("/obsm/", name),
@@ -212,10 +228,13 @@ for (name in test_names) {
       )
       expect_equal(res_obsm$status, 0, info = res_obsm$stdout)
 
+      # Remove the rhdf5-NA.OK for comparison
+      hdf5_clear_rhdf5_attributes(file_r2, paste0("/varm/", r_name))
+
       res_varm <- processx::run(
         "h5diff",
         c(
-          "-v",
+          "-v2",
           file_py,
           file_r2,
           paste0("/varm/", name),

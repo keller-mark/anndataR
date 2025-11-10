@@ -6,24 +6,22 @@
 \usage{
 from_Seurat(
   seurat_obj,
-  output_class = c("InMemoryAnnData", "HDF5AnnData", "ZarrAnnData"),
   assay_name = NULL,
   x_mapping = NULL,
-  layers_mapping = NULL,
-  obs_mapping = NULL,
-  var_mapping = NULL,
-  obsm_mapping = NULL,
-  varm_mapping = NULL,
-  obsp_mapping = NULL,
-  varp_mapping = NULL,
-  uns_mapping = NULL,
+  layers_mapping = TRUE,
+  obs_mapping = TRUE,
+  var_mapping = TRUE,
+  obsm_mapping = TRUE,
+  varm_mapping = TRUE,
+  obsp_mapping = TRUE,
+  varp_mapping = TRUE,
+  uns_mapping = TRUE,
+  output_class = c("InMemory", "HDF5AnnData", "ReticulateAnnData"),
   ...
 )
 }
 \arguments{
 \item{seurat_obj}{A Seurat object to be converted.}
-
-\item{output_class}{Name of the AnnData class. Must be one of \code{"HDF5AnnData"} or \code{"InMemoryAnnData"}.}
 
 \item{assay_name}{The name of the assay to be converted. If \code{NULL}, the default assay will be used
 (\code{\link[SeuratObject:DefaultAssay]{SeuratObject::DefaultAssay()}}).}
@@ -55,6 +53,8 @@ Each item in the list must be a named list with one or two elements. See section
 
 \item{uns_mapping}{A named list mapping miscellaneous data to the names of the data in the Seurat object.
 Each item in the list must be a named list with one or two elements. See section "\verb{$uns} mapping" for more details.}
+
+\item{output_class}{Name of the AnnData class. Must be one of \code{"HDF5AnnData"} or \code{"InMemoryAnnData"}.}
 
 \item{...}{Additional arguments passed to the generator function.}
 }

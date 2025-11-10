@@ -2,18 +2,34 @@
 #'
 #' Write an H5AD file
 #'
-#' @param object The object to write, either a "SingleCellExperiment" or a
-#' "Seurat" object
+#' @param object The object to write, either a
+#'   [`SingleCellExperiment::SingleCellExperiment`] or a
+#'   [`SeuratObject::Seurat`] object
 #' @param path Path of the file to write to
-#' @param compression The compression algorithm to use when writing the
-#'  HDF5 file. Can be one of `"none"`, `"gzip"` or `"lzf"`. Defaults to
-#' `"none"`.
+#' @param compression The compression algorithm to use when writing the HDF5
+#'   file. Can be one of `"none"`, `"gzip"` or `"lzf"`. Defaults to `"none"`.
 #' @param mode The mode to open the HDF5 file.
 #'
-#'   * `a` creates a new file or opens an existing one for read/write.
-#'   * `r+` opens an existing file for read/write.
+#'   * `a` creates a new file or opens an existing one for read/write
+#'   * `r+` opens an existing file for read/write
 #'   * `w` creates a file, truncating any existing ones
-#'   * `w-`/`x` are synonyms creating a file and failing if it already exists.
+#'   * `w-`/`x` are synonyms creating a file and failing if it already exists
+#' @param ... Additional arguments passed to [as_AnnData()]
+#'
+#' @details
+#'
+#' ## Compression
+#'
+#' Compression is currently not supported for Boolean arrays, they will be
+#' written uncompressed.
+#'
+#' ## `NULL` values
+#'
+#' For compatibility with changes in Python **anndata** 0.12.0, `NULL` values
+#' in `uns` are written to H5AD files as a `NULL` dataset (instead of not being
+#' written at all). To disable this behaviour, set
+#' `option(anndataR.write_null = FALSE)`. This may be required to allow the file
+#' to be read by older versions of Python **anndata**.
 #'
 #' @return `path` invisibly
 #' @export
@@ -45,7 +61,7 @@
 #'     reducedDims = list(PCA = pca, tSNE = tsne)
 #'   )
 #'
-#'   adata <- from_SingleCellExperiment(sce)
+#'   adata <- as_AnnData(sce)
 #'   h5ad_file <- tempfile(fileext = ".h5ad")
 #'   adata$write_h5ad(h5ad_file)
 #' }
@@ -70,7 +86,7 @@
 #'   )
 #'   obj[["RNA"]] <- AddMetaData(GetAssay(obj), gene.metadata)
 #'
-#'   adata <- from_Seurat(obj)
+#'   adata <- as_AnnData(obj)
 #'   h5ad_file <- tempfile(fileext = ".h5ad")
 #'   adata$write_h5ad(h5ad_file)
 #' }
@@ -78,36 +94,27 @@ write_h5ad <- function(
   object,
   path,
   compression = c("none", "gzip", "lzf"),
-  mode = c("w-", "r", "r+", "a", "w", "x")
+  mode = c("w-", "r", "r+", "a", "w", "x"),
+  ...
 ) {
   mode <- match.arg(mode)
-  adata <-
-    if (inherits(object, "SingleCellExperiment")) {
-      from_SingleCellExperiment(
-        object,
-        output_class = "HDF5AnnData",
-        file = path,
-        compression = compression,
-        mode = mode
-      )
-    } else if (inherits(object, "Seurat")) {
-      from_Seurat(
-        object,
-        output_class = "HDF5AnnData",
-        file = path,
-        compression = compression,
-        mode = mode
-      )
-    } else if (inherits(object, "AbstractAnnData")) {
-      object$to_HDF5AnnData(
-        path,
-        compression = compression,
-        mode = mode
-      )
-    } else {
-      cli_abort("Unable to write object of class {.cls {class(object)}}")
-    }
-  adata$close()
+  adata <- if (inherits(object, "AbstractAnnData")) {
+    object$as_HDF5AnnData(
+      path,
+      compression = compression,
+      mode = mode
+    )
+  } else {
+    as_AnnData(
+      object,
+      output_class = "HDF5AnnData",
+      file = path,
+      compression = compression,
+      mode = mode,
+      ...
+    )
+  }
+
   rm(adata)
   gc()
 

@@ -2,7 +2,7 @@
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
-    branches: [main]
+    branches: [devel]
   pull_request:
   release:
     types: [published]
@@ -21,7 +21,13 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install libsz2
 
       - uses: r-lib/actions/setup-pandoc@v2
 
@@ -33,6 +39,18 @@ jobs:
         with:
           extra-packages: local::.
           needs: website
+
+      # Avoid a caching issue where {rhdf5} was not restored properly
+      - name: Reinstall {rhdf5} and check availability
+        run: |
+          BiocManager::install(c("rhdf5", "Rhdf5lib"), force = TRUE)
+
+          if (requireNamespace("rhdf5")) {
+            cat(as.character(packageVersion("rhdf5")))
+          } else {
+            stop("rhdf5 not found")
+          }
+        shell: Rscript {0}
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)

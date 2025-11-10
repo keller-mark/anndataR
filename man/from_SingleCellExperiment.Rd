@@ -6,24 +6,21 @@
 \usage{
 from_SingleCellExperiment(
   sce,
-  output_class = c("InMemory", "HDF5AnnData", "ZarrAnnData"),
   x_mapping = NULL,
-  layers_mapping = NULL,
-  obs_mapping = NULL,
-  var_mapping = NULL,
-  obsm_mapping = NULL,
-  varm_mapping = NULL,
-  obsp_mapping = NULL,
-  varp_mapping = NULL,
-  uns_mapping = NULL,
+  layers_mapping = TRUE,
+  obs_mapping = TRUE,
+  var_mapping = TRUE,
+  obsm_mapping = TRUE,
+  varm_mapping = TRUE,
+  obsp_mapping = TRUE,
+  varp_mapping = TRUE,
+  uns_mapping = TRUE,
+  output_class = c("InMemory", "HDF5AnnData", "ReticulateAnnData"),
   ...
 )
 }
 \arguments{
 \item{sce}{An object inheriting from SingleCellExperiment.}
-
-\item{output_class}{Name of the AnnData class. Must be one of \code{"HDF5AnnData"}
-or \code{"InMemoryAnnData"}.}
 
 \item{x_mapping}{Name of the assay in \code{sce} to use as the \code{X} matrix in the AnnData object.}
 
@@ -69,6 +66,9 @@ should be the names of the \code{rowPairs} in \code{sce}.}
 \item{uns_mapping}{A named list mapping \code{metadata} in \code{sce} to \code{uns} in the created AnnData object.
 The names of the list should be the names of the \code{uns} in the resulting AnnData object. The values of the list
 should be the names of the \code{metadata} in \code{sce}.}
+
+\item{output_class}{Name of the AnnData class. Must be one of \code{"HDF5AnnData"}
+or \code{"InMemoryAnnData"}.}
 
 \item{...}{Additional arguments to pass to the generator function.}
 }

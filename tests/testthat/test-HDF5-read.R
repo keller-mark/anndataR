@@ -1,12 +1,9 @@
-skip_if_not_installed("hdf5r")
+skip_if_not_installed("rhdf5")
 
 requireNamespace("vctrs")
 
-file <- hdf5r::H5File$new(
-  system.file("extdata", "example.h5ad", package = "anndataR"),
-  mode = "r"
-)
-on.exit(file$close())
+filename <- system.file("extdata", "example.h5ad", package = "anndataR")
+file <- rhdf5::H5Fopen(filename, flags = "H5F_ACC_RDONLY", native = FALSE)
 
 test_that("reading encoding works", {
   encoding <- read_h5ad_encoding(file, "obs")
@@ -129,17 +126,18 @@ test_that("reading dataframes works", {
   )
 })
 
-test_that("reading H5AD as SingleCellExperiment works", {
-  skip_if_not_installed("SingleCellExperiment")
+rhdf5::H5Fclose(file)
 
-  sce <- read_h5ad(file, to = "SingleCellExperiment")
+test_that("reading H5AD as SingleCellExperiment works", {
+  suppressWarnings(skip_if_not_installed("SingleCellExperiment"))
+
+  sce <- read_h5ad(filename, as = "SingleCellExperiment")
   expect_s4_class(sce, "SingleCellExperiment")
 })
 
 test_that("reading H5AD as Seurat works", {
-  skip_if_not_installed("SeuratObject")
+  skip_if_not_installed("Seurat")
 
-  # TODO: remove this suppression when the to_seurat, from_seurat functions are updated.
-  seurat <- suppressWarnings(read_h5ad(file, to = "Seurat"))
+  seurat <- read_h5ad(filename, as = "Seurat")
   expect_s4_class(seurat, "Seurat")
 })
