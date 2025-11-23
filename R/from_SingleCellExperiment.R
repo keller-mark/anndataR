@@ -28,7 +28,7 @@ from_SingleCellExperiment <- function(
   obsp_mapping = TRUE,
   varp_mapping = TRUE,
   uns_mapping = TRUE,
-  output_class = c("InMemory", "HDF5AnnData", "ReticulateAnnData"),
+  output_class = c("InMemory", "HDF5AnnData", "ZarrAnnData", "ReticulateAnnData"),
   ...
 ) {
   check_requires(

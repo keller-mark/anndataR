@@ -287,6 +287,28 @@ AbstractAnnData <- R6::R6Class(
       )
     },
     #' @description
+    #' Convert to an [`ZarrAnnData`]
+    #'
+    #' See [as_ZarrAnnData()] for more details on the conversion
+    #'
+    #' @param file See [as_ZarrAnnData()]
+    #' @param compression See [as_ZarrAnnData()]
+    #' @param mode See [as_ZarrAnnData()]
+    #'
+    #' @return An [`ZarrAnnData`] object
+    as_ZarrAnnData = function(
+      file,
+      compression = c("none", "gzip", "lzf"),
+      mode = c("w-", "r", "r+", "a", "w", "x")
+      ) {
+        as_ZarrAnnData(
+          adata = self,
+          file = file,
+          compression = compression,
+          mode = mode
+        )
+    },
+    #' @description
     #' Write the `AnnData` object to an H5AD file
     #'
     #' See [write_h5ad()] for details

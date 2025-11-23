@@ -358,6 +358,7 @@ ZarrAnnData <- R6::R6Class(
       
       # TODO: check if empty
       # is_empty <- nrow(rhdf5::h5ls(file)) == 0L
+      is_empty <- TRUE
       
       if (!is_readonly) {
         if (!is_empty) {

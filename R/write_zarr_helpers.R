@@ -264,7 +264,6 @@ write_zarr_string_array <- function(value,
     dims <- length(value)
   }
 
-  object_codec <- pizzarr::VLenUtf8Codec$new()
   data <- array(data = value, dim = dims)
   # TODO: existing _index does not allow overwriting, so shall we keep overwrite=TRUE here ?
   # pizzarr::zarr_create_array(data,
@@ -323,15 +322,7 @@ write_zarr_string_scalar <- function(value,
                                      version = "0.2.0",
                                      overwrite = FALSE) {
   # Write scalar
-  object_codec <- pizzarr::VLenUtf8Codec$new()
   value <- array(data = value, dim = 1)
-  # pizzarr::zarr_create_array(value,
-  #                            store = store,
-  #                            path = name,
-  #                            dtype = "|O",
-  #                            object_codec = object_codec,
-  #                            shape = 1,
-  #                            overwrite = overwrite)
   Rarr::write_zarr_array(value,
                          zarr_array_path = file.path(store, name),
                          chunk_dim = 1)
@@ -496,9 +487,7 @@ write_zarr_data_frame_index <- function(value, store, name, compression, index_n
 #' one of `"none"`, `"gzip"` or `"lzf"`. Defaults to `"none"`.
 #' @param version The anndata on-disk format version to write
 write_empty_zarr <- function(store, obs, var, compression, version = "0.1.0", overwrite = FALSE) {
-  # pizzarr::zarr_open_group(store, path = "/")
-  create_zarr(dir = gsub(basename(store), "", store),
-              prefix = gsub(".zarr$", "", basename(store)))
+  create_zarr(store = store)
   write_zarr_encoding(store, "/", "anndata", "0.1.0")
 
   write_zarr_element(obs, store, "/obs", compression, overwrite = overwrite)
