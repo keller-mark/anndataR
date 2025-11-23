@@ -1,4 +1,4 @@
-skip_if_not_installed("pizzarr")
+# skip_if_not_installed("pizzarr")
 
 # zarr file
 zarr_dir <- system.file("extdata", "example.zarr.zip", package = "anndataR")
@@ -34,11 +34,25 @@ test_that("reading sparse matrices works", {
   expect_equal(dim(mat), c(50, 100))
 })
 
-
 test_that("reading recarrays works", {
-  f <- function() read_zarr_rec_array(store, "uns/rank_genes_groups/logfoldchanges")
-  expect_error(f())
+  array_list <- read_zarr_rec_array(
+    store,
+    "uns/rank_genes_groups/logfoldchanges"
+  )
+  expect_true(is.list(array_list))
+  expect_equal(names(array_list), c("0", "1", "2", "3", "4", "5"))
+  for (array in array_list) {
+    expect_true(is.vector(array))
+    expect_type(array, "double")
+    expect_equal(length(array), 100)
+  }
 })
+
+
+# test_that("reading recarrays works", {
+#   f <- function() read_zarr_rec_array(store, "uns/rank_genes_groups/logfoldchanges")
+#   expect_error(f())
+# })
 
 test_that("reading 1D numeric arrays works", {
   array_1d <- read_zarr_dense_array(store, "obs/Int")

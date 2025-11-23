@@ -20,7 +20,8 @@ Other AnnData classes:
 \code{\link{AnnDataView}},
 \code{\link{HDF5AnnData}},
 \code{\link{InMemoryAnnData}},
-\code{\link{ReticulateAnnData}}
+\code{\link{ReticulateAnnData}},
+\code{\link{ZarrAnnData}}
 }
 \concept{AnnData classes}
 \section{Active bindings}{

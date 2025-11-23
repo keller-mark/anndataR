@@ -22,7 +22,8 @@ Other AnnData classes:
 \code{\link{AbstractAnnData}},
 \code{\link{AnnDataView}},
 \code{\link{InMemoryAnnData}},
-\code{\link{ReticulateAnnData}}
+\code{\link{ReticulateAnnData}},
+\code{\link{ZarrAnnData}}
 }
 \concept{AnnData classes}
 \section{Super class}{

@@ -16,7 +16,14 @@
 #' `write_zarr_element()` should always be used instead of any of the specific
 #' writing functions as it contains additional boilerplate to make sure
 #' elements are written correctly.
-write_zarr_element <- function(value, store, name, compression = c("none", "gzip", "lzf"), stop_on_error = FALSE, ...) { # nolint
+write_zarr_element <- function(
+    value, 
+    store, 
+    name, 
+    compression = c("none", "gzip", "lzf"), 
+    stop_on_error = FALSE, 
+    ...
+) { 
   compression <- match.arg(compression)
 
   # Delete the path if it already exists

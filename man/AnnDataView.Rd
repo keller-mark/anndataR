@@ -34,7 +34,8 @@ Other AnnData classes:
 \code{\link{AbstractAnnData}},
 \code{\link{HDF5AnnData}},
 \code{\link{InMemoryAnnData}},
-\code{\link{ReticulateAnnData}}
+\code{\link{ReticulateAnnData}},
+\code{\link{ZarrAnnData}}
 }
 \concept{AnnData classes}
 \section{Super class}{

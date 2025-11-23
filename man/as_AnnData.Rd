@@ -239,6 +239,7 @@ Other object converters:
 \code{\link{as_ReticulateAnnData}()},
 \code{\link{as_Seurat}()},
 \code{\link{as_SingleCellExperiment}()},
+\code{\link{as_ZarrAnnData}()},
 \code{\link{reticulate-helpers}}
 }
 \concept{AnnData creators}
