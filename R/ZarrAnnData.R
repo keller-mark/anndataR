@@ -1,160 +1,232 @@
 #' @title ZarrAnnData
 #'
 #' @description
-#' Implementation of a Zarr-based AnnData object.
-#' @noRd
-ZarrAnnData <- R6::R6Class("ZarrAnnData", # nolint
+#' Implementation of an Zarr-backed `AnnData` object. This class provides an
+#' interface to a Zarr file and minimal data is stored in memory until it is
+#' requested by the user. It is primarily designed as an intermediate object
+#' when reading/writing Zarr files but can be useful for accessing parts of
+#' large files.
+#'
+#' See [AnnData-usage] for details on creating and using `AnnData` objects.
+#'
+#' @return An `ZarrAnnData` object
+#'
+#' @seealso [AnnData-usage] for details on creating and using `AnnData` objects
+#'
+#' @family AnnData classes
+ZarrAnnData <- R6::R6Class(
+  "ZarrAnnData", # nolint
   inherit = AbstractAnnData,
+  cloneable = FALSE,
   private = list(
-    zarr_store = NULL,
-    zarr_root = NULL,
-    .compression = NULL
+    .zarrobj = NULL,
+    .close_on_finalize = FALSE,
+    .compression = NULL,
+    
+    # TODO: is there a validation function in Rarr ? 
+    # .check_file_valid = function() {
+    #   if (!Rarr::is_valid(private$.zarrobj)) {
+    #     cli_abort(
+    #       paste(
+    #         "The Zarr file handle is not valid, it has probably been closed"
+    #       )
+    #     )
+    #   }
+    # },
+    
+    #' @description Close the Zarr file when the object is garbage collected
+    finalize = function() {
+      if (private$.close_on_finalize) {
+        self$close()
+      }
+      invisible(self)
+    }
   ),
   active = list(
-    #' @field X The X slot
+    #' @field X See [AnnData-usage]
     X = function(value) {
+      # private$.check_file_valid()
+      
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_X, status=done
-        read_zarr_element(private$zarr_store, "/X")
+        read_zarr_element(private$.zarrobj, "X") |>
+          private$.add_matrix_dimnames("X")
       } else {
         # trackstatus: class=ZarrAnnData, feature=set_X, status=done
-        value <- private$.validate_aligned_array(
+        private$.validate_aligned_array(
           value,
           "X",
           shape = c(self$n_obs(), self$n_vars()),
-          expected_rownames = rownames(self),
-          expected_colnames = colnames(self)
-        )
-        write_zarr_element(value, private$zarr_store, "/X", private$.compression, overwrite = TRUE)
+          expected_rownames = self$obs_names,
+          expected_colnames = self$var_names
+        ) |>
+          write_zarr_element(
+            private$.zarrobj,
+            "X",
+            private$.compression
+          )
       }
     },
-    #' @field layers The layers slot. Must be NULL or a named list
-    #'   with with all elements having the dimensions consistent with
-    #'   `obs` and `var`.
+    #' @field layers See [AnnData-usage]
     layers = function(value) {
+      # private$.check_file_valid()
+      
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_layers, status=done
-        read_zarr_element(private$zarr_store, "layers")
+        read_zarr_element(private$.zarrobj, "layers") |>
+          private$.add_mapping_dimnames("layers")
       } else {
         # trackstatus: class=ZarrAnnData, feature=set_layers, status=done
-        value <- private$.validate_aligned_mapping(
+        private$.validate_aligned_mapping(
           value,
           "layers",
           c(self$n_obs(), self$n_vars()),
-          expected_rownames = rownames(self),
-          expected_colnames = colnames(self)
-        )
-        write_zarr_element(value, private$zarr_store, "/layers", private$.compression, overwrite = TRUE)
+          expected_rownames = self$obs_names,
+          expected_colnames = self$var_names
+        ) |>
+          write_zarr_element(
+            private$.zarrobj,
+            "layers",
+            private$.compression
+          )
       }
     },
-    #' @field obsm The obsm slot. Must be `NULL` or a named list with
-    #'   with all elements having the same number of rows as `obs`.
+    #' @field obsm See [AnnData-usage]
     obsm = function(value) {
+      # private$.check_file_valid()
+      
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_obsm, status=done
-        read_zarr_element(private$zarr_store, "obsm")
+        read_zarr_element(private$.zarrobj, "obsm") |>
+          private$.add_mapping_dimnames("obsm")
       } else {
         # trackstatus: class=ZarrAnnData, feature=set_obsm, status=done
-        value <- private$.validate_aligned_mapping(
+        private$.validate_aligned_mapping(
           value,
           "obsm",
           c(self$n_obs()),
-          expected_rownames = rownames(self)
-        )
-        write_zarr_element(value, private$zarr_store, "/obsm")
+          expected_rownames = self$obs_names,
+          strip_rownames = TRUE,
+          strip_colnames = FALSE
+        ) |>
+          write_zarr_element(
+            private$.zarrobj,
+            "obsm",
+            private$.compression
+          )
       }
     },
-    #' @field varm The varm slot. Must be `NULL` or a named list with
-    #'   with all elements having the same number of rows as `var`.
+    #' @field varm See [AnnData-usage]
     varm = function(value) {
+      # private$.check_file_valid()
+      
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_varm, status=done
-        read_zarr_element(private$zarr_store, "varm")
+        read_zarr_element(private$.zarrobj, "varm") |>
+          private$.add_mapping_dimnames("varm")
       } else {
         # trackstatus: class=ZarrAnnData, feature=set_varm, status=done
-        value <- private$.validate_aligned_mapping(
+        private$.validate_aligned_mapping(
           value,
           "varm",
           c(self$n_vars()),
-          expected_rownames = colnames(self)
-        )
-        write_zarr_element(value, private$zarr_store, "/varm")
+          expected_rownames = self$var_names,
+          strip_rownames = TRUE,
+          strip_colnames = FALSE
+        ) |>
+          write_zarr_element(
+            private$.zarrobj,
+            "varm",
+            private$.compression
+          )
       }
     },
-    #' @field obsp The obsp slot. Must be `NULL` or a named list with
-    #'   with all elements having the same number of rows and columns as `obs`.
+    #' @field obsp See [AnnData-usage]
     obsp = function(value) {
+      # private$.check_file_valid()
+      
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_obsp, status=done
-        read_zarr_element(private$zarr_store, "obsp")
+        read_zarr_element(private$.zarrobj, "obsp") |>
+          private$.add_mapping_dimnames("obsp")
       } else {
         # trackstatus: class=ZarrAnnData, feature=set_obsp, status=done
-        value <- private$.validate_aligned_mapping(
+        private$.validate_aligned_mapping(
           value,
           "obsp",
           c(self$n_obs(), self$n_obs()),
-          expected_rownames = rownames(self),
-          expected_colnames = rownames(self)
-        )
-        write_zarr_element(value, private$zarr_store, "/obsp")
+          expected_rownames = self$obs_names,
+          expected_colnames = self$obs_names
+        ) |>
+          write_zarr_element(
+            private$.zarrobj,
+            "obsp",
+            private$.compression
+          )
       }
     },
-    #' @field varp The varp slot. Must be `NULL` or a named list with
-    #'   with all elements having the same number of rows and columns as `var`.
+    #' @field varp See [AnnData-usage]
     varp = function(value) {
+      # private$.check_file_valid()
+      
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_varp, status=done
-        read_zarr_element(private$zarr_store, "varp")
+        read_zarr_element(private$.zarrobj, "varp") |>
+          private$.add_mapping_dimnames("varp")
       } else {
         # trackstatus: class=ZarrAnnData, feature=set_varp, status=done
-        value <- private$.validate_aligned_mapping(
+        private$.validate_aligned_mapping(
           value,
           "varp",
           c(self$n_vars(), self$n_vars()),
-          expected_rownames = colnames(self),
-          expected_colnames = colnames(self)
-        )
-        write_zarr_element(value, private$zarr_store, "/varp")
+          expected_rownames = self$var_names,
+          expected_colnames = self$var_names
+        ) |>
+          write_zarr_element(
+            private$.zarrobj,
+            "varp",
+            private$.compression
+          )
       }
     },
-
-    #' @field obs The obs slot
+    #' @field obs See [AnnData-usage]
     obs = function(value) {
+      # private$.check_file_valid()
+      
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_obs, status=done
-        # TODO: shall we keep include_index = TRUE, or get rid of the argument ?
-        read_zarr_element(private$zarr_store, "/obs", include_index = TRUE)
+        read_zarr_element(private$.zarrobj, "obs")
       } else {
         # trackstatus: class=ZarrAnnData, feature=set_obs, status=done
-        value <- private$.validate_obsvar_dataframe(value, "obs")
-        write_zarr_element(
-          value,
-          private$zarr_store,
-          "/obs",
-          private$.compression,
-          overwrite = TRUE
-        )
+        private$.validate_obsvar_dataframe(value, "obs") |>
+          write_zarr_element(
+            private$.zarrobj,
+            "obs",
+            private$.compression
+          )
       }
     },
-    #' @field var The var slot
+    #' @field var See [AnnData-usage]
     var = function(value) {
+      # private$.check_file_valid()
+      
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_var, status=done
-        # TODO: shall we keep include_index = TRUE, or get rid of the argument ?
-        read_zarr_element(private$zarr_store, "/var", include_index = TRUE)
+        read_zarr_element(private$.zarrobj, "var")
       } else {
         # trackstatus: class=ZarrAnnData, feature=set_var, status=done
-        value <- private$.validate_obsvar_dataframe(value, "var")
-        write_zarr_element(
-          value,
-          private$zarr_store,
-          "/var",
-          overwrite = TRUE
-        )
+        private$.validate_obsvar_dataframe(value, "var") |>
+          write_zarr_element(
+            private$.zarrobj,
+            "var",
+            private$.compression
+          )
       }
     },
-    #' @field obs_names Names of observations
+    #' @field obs_names See [AnnData-usage]
     obs_names = function(value) {
+      # private$.check_file_valid()
+      
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_obs_names, status=done
         rownames(self$obs)
@@ -163,8 +235,10 @@ ZarrAnnData <- R6::R6Class("ZarrAnnData", # nolint
         rownames(self$obs) <- value
       }
     },
-    #' @field var_names Names of variables
+    #' @field var_names See [AnnData-usage]
     var_names = function(value) {
+      # private$.check_file_valid()
+      
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_var_names, status=done
         rownames(self$var)
@@ -173,230 +247,260 @@ ZarrAnnData <- R6::R6Class("ZarrAnnData", # nolint
         rownames(self$var) <- value
       }
     },
-    #' @field uns The uns slot. Must be `NULL` or a named list.
+    #' @field uns See [AnnData-usage]
     uns = function(value) {
+      # private$.check_file_valid()
+      
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_uns, status=done
-        read_zarr_element(private$zarr_store, "uns")
+        read_zarr_element(private$.zarrobj, "uns")
       } else {
         # trackstatus: class=ZarrAnnData, feature=set_uns, status=done
-        value <- private$.validate_named_list(value, "uns")
-        write_zarr_element(value, private$zarr_store, "/uns")
+        private$.validate_named_list(value, "uns") |>
+          write_zarr_element(
+            private$.zarrobj,
+            "uns",
+            private$.compression
+          )
       }
     }
   ),
   public = list(
-    #' @description ZarrAnnData constructor
+    #' @description
+    #' `ZarrAnnData` constructor
     #'
-    #' @param store The Zarr store instance.
-    #' @param X Either `NULL` or a observation × variable matrix with
-    #'   dimensions consistent with `obs` and `var`.
-    #' @param layers Either `NULL` or a named list, where each element is an
-    #'   observation × variable matrix with dimensions consistent with `obs` and
-    #'   `var`.
-    #' @param obs Either `NULL` or a `data.frame` with columns containing
-    #'   information about observations. If `NULL`, an `n_obs`×0 data frame will
-    #'   automatically be generated.
-    #' @param var Either `NULL` or a `data.frame` with columns containing
-    #'   information about variables. If `NULL`, an `n_vars`×0 data frame will
-    #'   automatically be generated.
-    #' @param obsm The obsm slot is used to store multi-dimensional annotation
-    #'   arrays. It must be either `NULL` or a named list, where each element is a
-    #'   matrix with `n_obs` rows and an arbitrary number of columns.
-    #' @param varm The varm slot is used to store multi-dimensional annotation
-    #'   arrays. It must be either `NULL` or a named list, where each element is a
-    #'   matrix with `n_vars` rows and an arbitrary number of columns.
-    #' @param obsp The obsp slot is used to store sparse multi-dimensional
-    #'   annotation arrays. It must be either `NULL` or a named list, where each
-    #'   element is a sparse matrix where each dimension has length `n_obs`.
-    #' @param varp The varp slot is used to store sparse multi-dimensional
-    #'   annotation arrays. It must be either `NULL` or a named list, where each
-    #'   element is a sparse matrix where each dimension has length `n_vars`.
-    #' @param uns The uns slot is used to store unstructured annotation. It must
-    #'   be either `NULL` or a named list.
-    #' @param compression The compression algorithm to use when writing
-    #'  Zarr arrays. Can be one of `"none"`, `"gzip"` or `"lzf"`. Defaults to
-    #' `"none"`.
+    #' @param file The file name (character) of the `.zarr` file. If this file
+    #'   already exits, other arguments must be `NULL`.
+    #' @param X See the `X` slot in [AnnData-usage]
+    #' @param layers See the `layers` slot in [AnnData-usage]
+    #' @param obs See the `obs` slot in [AnnData-usage]
+    #' @param var See the `var` slot in [AnnData-usage]
+    #' @param obsm See the `obsm` slot in [AnnData-usage]
+    #' @param varm See the `varm` slot in [AnnData-usage]
+    #' @param obsp See the `obsp` slot in [AnnData-usage]
+    #' @param varp See the `varp` slot in [AnnData-usage]
+    #' @param uns See the `uns` slot in [AnnData-usage]
+    #' @param shape Shape tuple (e.g. `c(n_obs, n_vars)`). Can be provided if
+    #'   both `X` or `obs` and `var` are not provided.
+    #' @param mode The mode to open the Zarr file. See [as_ZarrAnnData()] for
+    #'   details
+    #' @param compression The compression algorithm to use. See
+    #'   [as_ZarrAnnData()] for details
     #'
     #' @details
-    #' The constructor creates a new Zarr AnnData interface object. This can
-    #' either be used to either connect to an existing `.zarr` store or to
-    #' populate an empty one. In both cases, any additional slots provided will be
-    #' set on the created object. This will cause data to be overwritten if the
-    #' file already exists.
-    initialize = function(store,
-                          X = NULL,
-                          obs = NULL,
-                          var = NULL,
-                          layers = NULL,
-                          obsm = NULL,
-                          varm = NULL,
-                          obsp = NULL,
-                          varp = NULL,
-                          uns = NULL,
-                          shape = NULL,
-                          mode = c("r", "r+", "a", "w", "w-", "x"),
-                          compression = c("none", "gzip", "lzf")) {
-      if (!requireNamespace("pizzarr", quietly = TRUE)) {
-        stop("The Zarr interface requires the 'pizzarr' package to be installed")
-      }
-
-      # check arguments
+    #' The constructor creates a new Zarr `AnnData` interface object. This can
+    #' either be used to either connect to an existing `.zarr` file or to
+    #' create a new one. If any additional slot arguments are set an existing
+    #' file will be overwritten.
+    initialize = function(
+    file,
+    X = NULL,
+    obs = NULL,
+    var = NULL,
+    layers = NULL,
+    obsm = NULL,
+    varm = NULL,
+    obsp = NULL,
+    varp = NULL,
+    uns = NULL,
+    shape = NULL,
+    mode = c("a", "r", "r+", "w", "w-", "x"),
+    compression = c("none", "gzip", "lzf")
+    ) {
+      check_requires("ZarrAnnData", "Zarr", where = "Bioc")
+      
       compression <- match.arg(compression)
       mode <- match.arg(mode)
-
-      # store compression for later use
+      
       private$.compression <- compression
-
-      # root <- pizzarr::zarr_open_group(store, path = "/")
-      attrs <- read_zattrs(store)
-      if (length(attrs) == 0) {
-
-        # store private values
-        private$zarr_store <- store
-
-        # Determine initial obs and var
-        shape <- get_shape(obs, var, X, shape)
-        obs <- get_initial_obs(obs, X, shape)
-        var <- get_initial_var(var, X, shape)
-
-        # Create an empty Zarr
-        write_empty_zarr(store, obs, var, compression)
-
-        # set other slots
-        if (!is.null(X)) {
-          self$X <- X
+      
+      private$.close_on_finalize <- is.character(file)
+      
+      # TODO: Require {rhdf5} >= 2.53.3 to get access mode from file
+      # See https://github.com/Huber-group-EMBL/rhdf5/issues/163
+      is_readonly <- FALSE
+      
+      if (is.character(file)) {
+        if (mode == "a") {
+          if (file.exists(file)) {
+            mode <- "r+"
+          } else {
+            mode <- "w-"
+          }
         }
-        if (!is.null(layers)) {
-          self$layers <- layers
-        }
-        if (!is.null(obsm)) {
-          self$obsm <- obsm
-        }
-        if (!is.null(varm)) {
-          self$varm <- varm
-        }
-        if (!is.null(obsp)) {
-          self$obsp <- obsp
-        }
-        if (!is.null(varp)) {
-          self$varp <- varp
-        }
-        if (!is.null(uns)) {
-          self$uns <- uns
-        }
-      } else {
-
-        # # get root
-        # root <- pizzarr::zarr_open_group(store, path = "/")
-
-        # Check the file is a valid AnnData format
-        # attrs <- root$get_attrs()$to_list()
-        attrs <- read_zattrs(store)
-        if (!all(c("encoding-type", "encoding-version") %in% names(attrs))) {
-          stop(
-            "Zarr encoding information is missing. ",
-            "This file may have been created with Python anndata<0.8.0."
+        
+        if (!file.exists(file) && mode %in% c("r", "r+")) {
+          cli_abort(
+            paste(
+              "File {.file {file}} does not exist but mode is set to {.val {mode}}.",
+              "If you want to create a new file, use a different mode (e.g. 'w-').",
+              "See {.help read_zarr} or {.help write_zarr} for more information."
+            ),
+            call = rlang::caller_env()
           )
         }
-
-        # Set the file path
-        private$zarr_store <- store
-        # private$zarr_root <- root
-
-        # assert other arguments are NULL
-        if (!is.null(obs)) {
-          stop("obs must be NULL when loading an existing zarr store")
+        
+        if (file.exists(file) && mode %in% c("w-", "x")) {
+          cli_abort(
+            paste(
+              "File {.file {file}} already exists but mode is set to {.val {mode}}.",
+              "If you want to overwrite the file, use a different mode (e.g. 'w').",
+              "See {.help read_zarr} or {.help write_zarr} for more information."
+            ),
+            call = rlang::caller_env()
+          )
         }
-        if (!is.null(var)) {
-          stop("var must be NULL when loading an existing zarr store")
-        }
-        if (!is.null(X)) {
-          stop("X must be NULL when loading an existing zarr store")
-        }
-        if (!is.null(layers)) {
-          stop("layers must be NULL when loading an existing zarr store")
-        }
-        if (!is.null(obsm)) {
-          stop("obsm must be NULL when loading an existing zarr store")
-        }
-        if (!is.null(varm)) {
-          stop("varm must be NULL when loading an existing zarr store")
-        }
-        if (!is.null(obsp)) {
-          stop("obsp must be NULL when loading an existing zarr store")
-        }
-        if (!is.null(varp)) {
-          stop("varp must be NULL when loading an existing zarr store")
-        }
-        if (!is.null(uns)) {
-          stop("uns must be NULL when loading an existing zarr store")
+        
+        if (mode %in% c("w", "w-", "x")) {
+          file <- rhdf5::H5Fcreate(
+            file,
+            flags = "H5F_ACC_TRUNC",
+            native = FALSE
+          )
+        } else if (mode == "r") {
+          is_readonly <- TRUE
+          file <- rhdf5::H5Fopen(file, flags = "H5F_ACC_RDONLY", native = FALSE)
+        } else if (mode == "r+") {
+          file <- rhdf5::H5Fopen(file, flags = "H5F_ACC_RDWR", native = FALSE)
         }
       }
+      
+      if (!(inherits(file, "H5IdComponent") && rhdf5::H5Iis_valid(file))) {
+        cli_abort(
+          paste(
+            "{.arg file} must be a {.cls character} or an open ",
+            "{.cls rhdf5::H5IdComponent} file handle object,",
+            "but is a {.cls {class(file)}}"
+          )
+        )
+      }
+      
+      # TODO: check if empty
+      # is_empty <- nrow(rhdf5::h5ls(file)) == 0L
+      
+      if (!is_readonly) {
+        if (!is_empty) {
+          cli_warn(
+            paste(
+              "An non-empty file is opened in read/write mode.",
+              "Use with caution, as this can lead to data corruption."
+            )
+          )
+        } else {
+          shape <- get_shape(obs, var, X, shape)
+          obs <- get_initial_obs(obs, X, shape)
+          var <- get_initial_var(var, X, shape)
+          write_empty_zarr(file, obs, var, compression)
+        }
+      }
+      
+      # File is supposed to exist by now. Check if it is a valid Zarr file
+      # TODO: attr in Zarr ?
+      # attrs <- rhdf5::h5readAttributes(file, "/")
+      # if (!all(c("encoding-type", "encoding-version") %in% names(attrs))) {
+      #   path <- rhdf5::H5Fget_name(file)
+      #   cli_abort(c(
+      #     "File {.file {path}} is not a valid Zarr file.",
+      #     i = "Either the file is not an Zarr file or it was created with {.pkg anndata<0.8.0}."
+      #   ))
+      # }
+      
+      # Set the file path
+      private$.zarrobj <- file
+      
+      if (is_readonly) {
+        # if any of these variables are not NULL, throw an error
+        are_null <- vapply(
+          .anndata_slots,
+          function(x) is.null(get(x)),
+          logical(1)
+        )
+        if (!all(are_null)) {
+          cli_abort(
+            paste0(
+              "Error trying to write data (",
+              paste(.anndata_slots[!are_null], collapse = ", "),
+              ") to an Zarr file opened in read-only mode."
+            )
+          )
+        }
+      } else {
+        for (slot in .anndata_slots) {
+          value <- get(slot)
+          if (!is.null(value)) {
+            self[[slot]] <- value
+          }
+        }
+      }
+      
+      self
     },
-
-    #' @description Number of observations in the AnnData object
+    
+    #' @description Close the Zarr file
+    close = function() {
+      if (rhdf5::H5Iis_valid(private$.zarrobj)) {
+        tryCatch({
+          rhdf5::H5Fclose(private$.zarrobj)
+          rhdf5::H5garbage_collect()
+          gc()
+        })
+      }
+      
+      invisible(NULL)
+    },
+    
+    #' @description See the `n_obs` field in [AnnData-usage]
     n_obs = function() {
       nrow(self$obs)
     },
-
-    #' @description Number of variables in the AnnData object
+    
+    #' @description See the `n_vars` field in [AnnData-usage]
     n_vars = function() {
       nrow(self$var)
     }
   )
 )
 
-#' Convert an AnnData object to a ZarrAnnData object
+#' Convert an `AnnData` to an `ZarrAnnData`
 #'
-#' This function takes an AnnData object and converts it to a ZarrAnnData
-#' object, loading all fields into memory.
+#' Convert another `AnnData` object to an [`ZarrAnnData`] object
 #'
-#' @param adata An AnnData object to be converted to ZarrAnnData.
-#' @param store The Zarr store.
-#' @param compression The compression algorithm to use when writing
-#'  Zarr arrays. Can be one of `"none"`, `"gzip"` or `"lzf"`. Defaults to
-#' `"none"`.
-#' @param mode The mode to open the Zarr store.
+#' @param adata An `AnnData` object to be converted to [`ZarrAnnData`]
+#' @param file The file name (character) of the `.zarr` file
+#' @param compression The compression algorithm to use when writing the
+#'   Zarr file. Can be one of `"none"`, `"gzip"` or `"lzf"`. Defaults to
+#'   `"none"`.
+#' @param mode The mode to open the Zarr file:
 #'
-#'   * `a` creates a new file or opens an existing one for read/write.
-#'   * `r` opens an existing file for reading.
-#'   * `r+` opens an existing file for read/write.
-#'   * `w` creates a file, truncating any existing ones.
-#'   * `w-`/`x` are synonyms, creating a file and failing if it already exists.
+#'   * `a` creates a new file or opens an existing one for read/write
+#'   * `r` opens an existing file for reading
+#'   * `r+` opens an existing file for read/write
+#'   * `w` creates a file, truncating any existing ones
+#'   * `w-`/`x` are synonyms, creating a file and failing if it already exists
 #'
-#' @return a ZarrAnnData object with the same data as the input AnnData
+#' @return An [`ZarrAnnData`] object with the same data as the input `AnnData`
 #'   object.
+#' @keywords internal
 #'
-#' @noRd
+#' @family object converters
 #'
-#' @examples
-#' ad <- AnnData(
-#'   X = matrix(1:5, 3L, 5L),
-#'   layers = list(
-#'     A = matrix(5:1, 3L, 5L),
-#'     B = matrix(letters[1:5], 3L, 5L)
-#'   ),
-#'   obs = data.frame(cell = 1:3),
-#'   var = data.frame(gene = 1:5),
-#'   obs_names = LETTERS[1:3],
-#'   var_names = letters[1:5]
-#' )
-#' to_ZarrAnnData(ad, "test.zarr")
-#' # remove store directory
-#' unlink("test.zarr", recursive = TRUE)
 # nolint start: object_name_linter
-to_ZarrAnnData <- function(
+as_ZarrAnnData <- function(
     # nolint end: object_name_linter
-    adata,
-    store,
-    compression = c("none", "gzip", "lzf"),
-    mode = c("w-", "r", "r+", "a", "w", "x")) {
-  stopifnot(
-    inherits(adata, "AbstractAnnData")
-  )
+  adata,
+  file,
+  compression = c("none", "gzip", "lzf"),
+  mode = c("w-", "r", "r+", "a", "w", "x")
+) {
+  if (!(inherits(adata, "AbstractAnnData"))) {
+    cli_abort(
+      "{.arg adata} must be a {.cls AbstractAnnData} but has class {.cls {class(adata)}}"
+    )
+  }
+  
+  mode <- match.arg(mode)
   ZarrAnnData$new(
-    store = store,
+    file = file,
     X = adata$X,
     obs = adata$obs,
     var = adata$var,
@@ -406,8 +510,21 @@ to_ZarrAnnData <- function(
     obsp = adata$obsp,
     varp = adata$varp,
     uns = adata$uns,
-    compression = compression,
     shape = adata$shape(),
-    mode = mode
+    mode = mode,
+    compression = compression
   )
+}
+
+# nolint start: object_name_linter
+cleanup_ZarrAnnData <- function(...) {
+  # nolint end: object_name_linter
+  args <- list(...)
+  
+  if (
+    !is.null(args$file) && is.character(args$file) && file.exists(args$file)
+  ) {
+    cli::cli_alert("Removing file: ", args$file)
+    unlink(args$file)
+  }
 }
