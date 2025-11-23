@@ -4,14 +4,14 @@
 \alias{create_zarr}
 \title{create_zarr}
 \usage{
-create_zarr(dir, prefix, version = "v2")
+create_zarr(store, version = "v2")
 }
 \arguments{
+\item{version}{zarr version}
+
 \item{dir}{the location of zarr store}
 
 \item{prefix}{prefix of the zarr store}
-
-\item{version}{zarr version}
 }
 \description{
 create zarr store

@@ -231,7 +231,8 @@ as_AnnData(sce)
 \seealso{
 Other AnnData creators: 
 \code{\link{AnnData}()},
-\code{\link{read_h5ad}()}
+\code{\link{read_h5ad}()},
+\code{\link{read_zarr}()}
 
 Other object converters: 
 \code{\link{as_HDF5AnnData}()},

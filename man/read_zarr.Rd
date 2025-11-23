@@ -6,42 +6,60 @@
 \usage{
 read_zarr(
   path,
-  to = c("InMemoryAnnData", "HDF5AnnData", "SingleCellExperiment", "Seurat",
-    "ZarrAnnData"),
+  as = c("InMemoryAnnData", "ZarrAnnData", "SingleCellExperiment", "Seurat"),
+  mode = c("r", "r+", "a", "w", "w-", "x"),
   ...
 )
 }
 \arguments{
 \item{path}{Path to the Zarr store to read}
 
-\item{to}{The type of object to return. Must be one of: "InMemoryAnnData",
-"HDF5AnnData", "SingleCellExperiment", "Seurat"}
+\item{as}{The type of object to return. One of:
+\itemize{
+\item \code{"InMemoryAnnData"}: Read the Zarr store into memory as an
+\code{\link{InMemoryAnnData}} object
+\item \code{"ZarrAnnData"}: Read the Zarr store as an \code{\link{ZarrAnnData}} object
+\item \code{"SingleCellExperiment"}: Read the Zarr store as a
+\code{\link[SingleCellExperiment:SingleCellExperiment]{SingleCellExperiment::SingleCellExperiment}} object
+\item \code{"Seurat"}: Read the Zarr store as a
+\code{\link[SeuratObject:Seurat-class]{SeuratObject::Seurat}} object
+}}
 
-\item{...}{Extra arguments provided to \code{adata$to_SingleCellExperiment()} or
-\code{adata$to_Seurat()}. See \code{\link[=AnnData]{AnnData()}} for more information on the arguments of
-these functions. Note: update this documentation when
-\href{https://github.com/r-lib/roxygen2/issues/955}{\code{r-lib/roxygen2#955}} is resolved.}
+\item{mode}{The mode to open the Zarr file.
+\itemize{
+\item \code{a} creates a new file or opens an existing one for read/write.
+\item \code{r} opens an existing file for reading.
+\item \verb{r+} opens an existing file for read/write.
+\item \code{w} creates a file, truncating any existing ones.
+\item \verb{w-}/\code{x} are synonyms, creating a file and failing if it already exists.
+}}
+
+\item{...}{Extra arguments provided to the \verb{as_*} conversion function for the
+object specified by \code{as}}
 }
 \value{
-The object specified by \code{to}
+The object specified by \code{as}
 }
 \description{
 Read data from a Zarr store
 }
 \examples{
-zarr_dir <- system.file("extdata", "example.zarr.zip", package = "anndataR")
-td <- tempdir(check = TRUE)
-unzip(zarr_dir, exdir = td)
-file <- file.path(td, "example.zarr")
-store <- pizzarr::DirectoryStore$new(file)
+zarr_store <- system.file("extdata", "example.zarr", package = "anndataR")
 
-# Read the Zarr store as a SingleCellExperiment object
+# Read the Zarr as a SingleCellExperiment object
 if (requireNamespace("SingleCellExperiment", quietly = TRUE)) {
-  sce <- read_zarr(store, to = "SingleCellExperiment")
+  sce <- read_zarr(zarr_store, as = "SingleCellExperiment")
 }
 
-# Read the Zarr store as a Seurat object
+# Read the Zarr as a Seurat object
 if (requireNamespace("SeuratObject", quietly = TRUE)) {
-  seurat <- read_zarr(store, to = "Seurat")
+  seurat <- read_zarr(zarr_store, as = "Seurat")
 }
 }
+\seealso{
+Other AnnData creators: 
+\code{\link{AnnData}()},
+\code{\link{as_AnnData}()},
+\code{\link{read_h5ad}()}
+}
+\concept{AnnData creators}

@@ -66,6 +66,7 @@ adata
 
 Other AnnData creators: 
 \code{\link{as_AnnData}()},
-\code{\link{read_h5ad}()}
+\code{\link{read_h5ad}()},
+\code{\link{read_zarr}()}
 }
 \concept{AnnData creators}

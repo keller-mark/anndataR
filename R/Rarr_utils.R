@@ -34,16 +34,18 @@ create_zarr_group <- function(store, name, version = "v2"){
 #' @param dir the location of zarr store
 #' @param prefix prefix of the zarr store
 #' @param version zarr version
-#'
+#' 
 #' @examples
 #' dir.create(td <- tempfile())
 #' zarr_name <- "test"
 #' create_zarr(dir = td, prefix = "test")
 #' dir.exists(file.path(td, "test.zarr"))
-#'
+#' 
 #' @export
-create_zarr <- function(dir, prefix, version = "v2"){
-  create_zarr_group(store = dir, name = paste0(prefix, ".zarr"), version = version)
+create_zarr <- function(store, version = "v2"){
+  prefix <- basename(store)
+  dir <- gsub(paste0(prefix, "$"), "", store)
+  create_zarr_group(store = dir, name = prefix, version = version)
 }
 
 #' Read the .zattrs file associated with a Zarr array or group

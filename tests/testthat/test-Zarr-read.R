@@ -120,7 +120,7 @@ test_that("reading dataframes works", {
 test_that("reading Zarr as SingleCellExperiment works", {
   skip_if_not_installed("SingleCellExperiment")
 
-  sce <- read_zarr(store, to = "SingleCellExperiment")
+  sce <- read_zarr(store, as = "SingleCellExperiment")
   expect_s4_class(sce, "SingleCellExperiment")
 })
 
@@ -128,6 +128,6 @@ test_that("reading Zarr as Seurat works", {
   skip_if_not_installed("SeuratObject")
 
   # TODO: remove this suppression when the to_seurat, from_seurat functions are updated.
-  seurat <- suppressWarnings(read_zarr(store, to = "Seurat"))
+  seurat <- suppressWarnings(read_zarr(store, as = "Seurat"))
   expect_s4_class(seurat, "Seurat")
 })

@@ -59,6 +59,7 @@ if (requireNamespace("SeuratObject", quietly = TRUE)) {
 \seealso{
 Other AnnData creators: 
 \code{\link{AnnData}()},
-\code{\link{as_AnnData}()}
+\code{\link{as_AnnData}()},
+\code{\link{read_zarr}()}
 }
 \concept{AnnData creators}

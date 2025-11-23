@@ -3,51 +3,65 @@
 #' Read data from a Zarr store
 #'
 #' @param path Path to the Zarr store to read
-#' @param to The type of object to return. Must be one of: "InMemoryAnnData",
-#'   "HDF5AnnData", "SingleCellExperiment", "Seurat"
-#' @param ... Extra arguments provided to `adata$to_SingleCellExperiment()` or
-#'   `adata$to_Seurat()`. See [AnnData()] for more information on the arguments of
-#'   these functions. Note: update this documentation when
-#'   [`r-lib/roxygen2#955`](https://github.com/r-lib/roxygen2/issues/955) is resolved.
+#' @param as The type of object to return. One of:
 #'
-#' @return The object specified by `to`
+#'   * `"InMemoryAnnData"`: Read the Zarr store into memory as an
+#'     [`InMemoryAnnData`] object
+#'   * `"ZarrAnnData"`: Read the Zarr store as an [`ZarrAnnData`] object
+#'   * `"SingleCellExperiment"`: Read the Zarr store as a
+#'     [`SingleCellExperiment::SingleCellExperiment`] object
+#'   * `"Seurat"`: Read the Zarr store as a
+#'     [`SeuratObject::Seurat`] object
+#' @param mode The mode to open the Zarr file.
+#'
+#'   * `a` creates a new file or opens an existing one for read/write.
+#'   * `r` opens an existing file for reading.
+#'   * `r+` opens an existing file for read/write.
+#'   * `w` creates a file, truncating any existing ones.
+#'   * `w-`/`x` are synonyms, creating a file and failing if it already exists.
+#' @param ... Extra arguments provided to the `as_*` conversion function for the
+#'   object specified by `as`
+#'
+#' @return The object specified by `as`
 #' @export
 #'
-#' @examples
-#' zarr_dir <- system.file("extdata", "example.zarr.zip", package = "anndataR")
-#' td <- tempdir(check = TRUE)
-#' unzip(zarr_dir, exdir = td)
-#' file <- file.path(td, "example.zarr")
-#' store <- pizzarr::DirectoryStore$new(file)
+#' @family AnnData creators
 #'
-#' # Read the Zarr store as a SingleCellExperiment object
+#' @examples
+#' zarr_store <- system.file("extdata", "example.zarr", package = "anndataR")
+#'
+#' # Read the Zarr as a SingleCellExperiment object
 #' if (requireNamespace("SingleCellExperiment", quietly = TRUE)) {
-#'   sce <- read_zarr(store, to = "SingleCellExperiment")
+#'   sce <- read_zarr(zarr_store, as = "SingleCellExperiment")
 #' }
 #'
-#' # Read the Zarr store as a Seurat object
+#' # Read the Zarr as a Seurat object
 #' if (requireNamespace("SeuratObject", quietly = TRUE)) {
-#'   seurat <- read_zarr(store, to = "Seurat")
+#'   seurat <- read_zarr(zarr_store, as = "Seurat")
 #' }
 read_zarr <- function(
-    path,
-    to = c("InMemoryAnnData", "HDF5AnnData", "SingleCellExperiment", "Seurat", "ZarrAnnData"),
-    ...) {
-  to <- match.arg(to)
+  path,
+  as = c("InMemoryAnnData", "ZarrAnnData", "SingleCellExperiment", "Seurat"),
+  mode = c("r", "r+", "a", "w", "w-", "x"),
+  ...
+) {
+  as <- match.arg(as)
+  mode <- match.arg(mode)
 
-  adata <- ZarrAnnData$new(path)
+  zarr_adata <- ZarrAnnData$new(path, mode = mode)
 
-  fun <- switch(to,
-    "SingleCellExperiment" = to_SingleCellExperiment,
-    "Seurat" = to_Seurat,
-    "InMemoryAnnData" = to_InMemoryAnnData,
-    "HDF5AnnData" = to_HDF5AnnData,
-    "ZarrAnnData" = NULL
+  if (as == "ZarrAnnData") {
+    return(zarr_adata)
+  }
+
+  adata <- switch(
+    as,
+    "SingleCellExperiment" = zarr_adata$as_SingleCellExperiment(...),
+    "Seurat" = zarr_adata$as_Seurat(...),
+    "InMemoryAnnData" = zarr_adata$as_InMemoryAnnData(...)
   )
 
-  if (!is.null(fun)) {
-    fun(adata, ...)
-  } else {
-    adata
-  }
+  zarr_adata$close()
+
+  adata
 }

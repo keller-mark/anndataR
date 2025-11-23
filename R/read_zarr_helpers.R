@@ -512,7 +512,6 @@ read_zarr_collection <- function(store, name, item_names) {
   items <- lapply(
     item_names,
     function(item_name) {
-      print(item_name)
       new_name <- paste0(name, "/", item_name)
       encoding <- read_zarr_encoding(store, new_name)
       read_zarr_element(

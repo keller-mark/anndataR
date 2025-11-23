@@ -307,7 +307,7 @@ ZarrAnnData <- R6::R6Class(
     mode = c("a", "r", "r+", "w", "w-", "x"),
     compression = c("none", "gzip", "lzf")
     ) {
-      check_requires("ZarrAnnData", "Zarr", where = "Bioc")
+      check_requires("ZarrAnnData", "Rarr", where = "Bioc")
       
       compression <- match.arg(compression)
       mode <- match.arg(mode)
@@ -316,20 +316,18 @@ ZarrAnnData <- R6::R6Class(
       
       private$.close_on_finalize <- is.character(file)
       
-      # TODO: Require {rhdf5} >= 2.53.3 to get access mode from file
-      # See https://github.com/Huber-group-EMBL/rhdf5/issues/163
       is_readonly <- FALSE
       
       if (is.character(file)) {
         if (mode == "a") {
-          if (file.exists(file)) {
+          if (dir.exists(file)) {
             mode <- "r+"
           } else {
             mode <- "w-"
           }
         }
         
-        if (!file.exists(file) && mode %in% c("r", "r+")) {
+        if (!dir.exists(file) && mode %in% c("r", "r+")) {
           cli_abort(
             paste(
               "File {.file {file}} does not exist but mode is set to {.val {mode}}.",
@@ -340,7 +338,7 @@ ZarrAnnData <- R6::R6Class(
           )
         }
         
-        if (file.exists(file) && mode %in% c("w-", "x")) {
+        if (dir.exists(file) && mode %in% c("w-", "x")) {
           cli_abort(
             paste(
               "File {.file {file}} already exists but mode is set to {.val {mode}}.",
@@ -352,27 +350,10 @@ ZarrAnnData <- R6::R6Class(
         }
         
         if (mode %in% c("w", "w-", "x")) {
-          file <- rhdf5::H5Fcreate(
-            file,
-            flags = "H5F_ACC_TRUNC",
-            native = FALSE
-          )
+          create_zarr(file)
         } else if (mode == "r") {
           is_readonly <- TRUE
-          file <- rhdf5::H5Fopen(file, flags = "H5F_ACC_RDONLY", native = FALSE)
-        } else if (mode == "r+") {
-          file <- rhdf5::H5Fopen(file, flags = "H5F_ACC_RDWR", native = FALSE)
-        }
-      }
-      
-      if (!(inherits(file, "H5IdComponent") && rhdf5::H5Iis_valid(file))) {
-        cli_abort(
-          paste(
-            "{.arg file} must be a {.cls character} or an open ",
-            "{.cls rhdf5::H5IdComponent} file handle object,",
-            "but is a {.cls {class(file)}}"
-          )
-        )
+        } 
       }
       
       # TODO: check if empty
@@ -394,8 +375,8 @@ ZarrAnnData <- R6::R6Class(
         }
       }
       
-      # File is supposed to exist by now. Check if it is a valid Zarr file
       # TODO: attr in Zarr ?
+      # File is supposed to exist by now. Check if it is a valid Zarr file
       # attrs <- rhdf5::h5readAttributes(file, "/")
       # if (!all(c("encoding-type", "encoding-version") %in% names(attrs))) {
       #   path <- rhdf5::H5Fget_name(file)
@@ -436,17 +417,9 @@ ZarrAnnData <- R6::R6Class(
       self
     },
     
-    #' @description Close the Zarr file
+    # We don't close 
+    #' @description Close the Zarr store
     close = function() {
-      if (rhdf5::H5Iis_valid(private$.zarrobj)) {
-        tryCatch({
-          rhdf5::H5Fclose(private$.zarrobj)
-          rhdf5::H5garbage_collect()
-          gc()
-        })
-      }
-      
-      invisible(NULL)
     },
     
     #' @description See the `n_obs` field in [AnnData-usage]

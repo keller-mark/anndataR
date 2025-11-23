@@ -160,7 +160,7 @@ file will be overwritten.
 \if{html}{\out{<a id="method-ZarrAnnData-close"></a>}}
 \if{latex}{\out{\hypertarget{method-ZarrAnnData-close}{}}}
 \subsection{Method \code{close()}}{
-Close the Zarr file
+Close the Zarr store
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ZarrAnnData$close()}\if{html}{\out{</div>}}
 }
