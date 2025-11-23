@@ -48,12 +48,6 @@ test_that("reading recarrays works", {
   }
 })
 
-
-# test_that("reading recarrays works", {
-#   f <- function() read_zarr_rec_array(store, "uns/rank_genes_groups/logfoldchanges")
-#   expect_error(f())
-# })
-
 test_that("reading 1D numeric arrays works", {
   array_1d <- read_zarr_dense_array(store, "obs/Int")
   expect_vector(array_1d, ptype = integer(), size = 50)
@@ -82,13 +76,6 @@ test_that("reading 1D nullable arrays works", {
   expect_true(any(is.na(array_1d)))
 })
 
-test_that("reading 1D nullable arrays works (Nullable boolean)", {
-  skip("TODO: non NA booleans dont have mask arrays, should they ?")
-  array_1d <- read_zarr_nullable_boolean(store, "obs/Bool")
-  expect_vector(array_1d, ptype = logical(), size = 50)
-  expect_false(any(is.na(array_1d)))
-})
-
 test_that("reading string scalars works", {
   scalar <- read_zarr_string_scalar(store, "uns/StringScalar")
   expect_equal(scalar, "A string")
@@ -110,6 +97,7 @@ test_that("reading string arrays works", {
   expect_equal(dim(array), c(5, 10))
 })
 
+# TODO: can we get ordering info from attrs ? 
 test_that("reading mappings works", {
   mapping <- read_zarr_mapping(store, "uns")
   expect_type(mapping, "list")

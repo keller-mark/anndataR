@@ -235,7 +235,7 @@ read_zarr_rec_array <- function(store, name, version = "0.2.0") {
   )
   setNames(
     lapply(field_names, function(x){
-      Rarr::read_zarr_array(file.path(store, name, x))
+      as.vector(Rarr::read_zarr_array(file.path(store, name, x)))
     }),
     field_names)
 }
@@ -503,26 +503,27 @@ read_zarr_data_frame_index <- function(store, name, version = "0.2.0") {
 #'
 #' @param store A Zarr store instance
 #' @param name Name of the element within the Zarr store
-#' @param column_order Vector of item names (in order)
+#' @param item_names Vector of item names (in order)
 #'
 #' @return a named list
 #'
 #' @noRd
-read_zarr_collection <- function(store, name, column_order) {
-  columns <- list()
-  for (col_name in column_order) {
-    new_name <- paste0(name, "/", col_name)
-    tryCatch({
+read_zarr_collection <- function(store, name, item_names) {
+  items <- lapply(
+    item_names,
+    function(item_name) {
+      print(item_name)
+      new_name <- paste0(name, "/", item_name)
       encoding <- read_zarr_encoding(store, new_name)
-      columns[[col_name]] <- read_zarr_element(
+      read_zarr_element(
         store = store,
         name = new_name,
         type = encoding$type,
         version = encoding$version
       )
-    }, error = function(cond) {
-      warning("Not reading file '", new_name, "' in collection")
-    })
-  }
-  columns
+    }
+  )
+  names(items) <- item_names
+  
+  items
 }
