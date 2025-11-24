@@ -4,8 +4,12 @@ import scanpy  # scanpy v1.11.4
 import numpy  # numpy v2.2.6
 import pandas  # pandas v2.3.0
 import scipy.sparse  # scipy v1.14.1
+import zarr  # zarr 2.18.7
 
-# This script uses Python to create an example H5AD file for testing
+import shutil
+import zipfile 
+
+# This script uses Python to create example H5AD and Zarr files for testing
 # interoperability between languages. It is designed to be a small but
 # relatively complex file that tests reading of different types and data
 # structures. The standard scanpy workflow has also been applied to populate
@@ -17,11 +21,17 @@ import scipy.sparse  # scipy v1.14.1
 # changelog below and format the file using Python Black
 # (https://black.readthedocs.io/en/stable/).
 #
-# Version: 0.2.0
-# Date: 2023-05-11
+# Version: 0.4.0
+# Date: 2025-11-24
 #
 # CHANGELOG
-#
+# 
+# v0.4.0 (2025-11-24)
+# - Add zarr example
+# - Add requirements.yml
+# v0.3.0 (2025-08-04)
+# - Add adata.varp["test_varp"] to test reading of varp
+# - Update package versions to latest stable versions
 # v0.3.0 (2025-08-04)
 # - Add adata.varp["test_varp"] to test reading of varp
 # - Update package versions to latest stable versions
@@ -91,6 +101,11 @@ adata.varp["test_varp"] = numpy.random.rand(adata.n_vars, adata.n_vars)
 
 # Write the H5AD file
 adata.write_h5ad("inst/extdata/example.h5ad", compression="gzip")
-adata.write_zarr("inst/extdata/example.zarr", compression="gzip")
-# TODO: zip example.zarr too
+
+# Write Zarr 
+adata.write_zarr("inst/extdata/example.zarr")
+zip = zipfile.ZipFile("inst/extdata/example.zarr.zip", "w", zipfile.ZIP_DEFLATED)
+zip.write("inst/extdata/example.zarr")
+shutil.rmtree("inst/extdata/example.zarr")
+zip.close()
 
