@@ -8,8 +8,8 @@ file <- hdf5r::H5File$new(system.file("extdata", "example.h5ad", package = "annd
 zarr_dir <- system.file("extdata", "example.zarr.zip", package = "anndataR")
 td <- tempdir(check = TRUE)
 unzip(zarr_dir, exdir = td)
-zarr_dir <- file.path(td, "example.zarr")
-s
+store <- file.path(td, "example.zarr")
+
 test_that("reading dense matrices is same for h5ad and zarr", {
   mat_h5ad <- read_h5ad_dense_array(file, "layers/dense_counts")
   mat_zarr <- read_zarr_dense_array(store, "layers/dense_counts")

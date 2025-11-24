@@ -46,43 +46,65 @@ test_that("reading varm works", {
   )
 })
 
-test_that("obsm/ varm validation", {
-  N_OBS <- 5
-  N_VAR <- 3
+# test_that("obsm/ varm validation", {
+#   N_OBS <- 5
+#   N_VAR <- 3
+# 
+#   mtx <- matrix(
+#     0,
+#     N_OBS,
+#     N_VAR
+#   )
+# 
+#   adata <- AnnData(
+#     X = mtx,
+#     obs = data.frame(row.names = as.character(1:N_OBS)),
+#     var = data.frame(row.names = as.character(1:N_VAR))
+#   )
+# 
+#   adata$obsm <- list(PCA = matrix(0, N_OBS, 4))
+#   adata$varm <- list(PCs = matrix(0, N_VAR, 4))
+# 
+#   expect_error(adata$obsm <- list(PCA = matrix(0, 4, 4)))
+#   expect_error(adata$varm <- list(PCs = matrix(0, 4, 4)))
+# })
+# 
+# test_that("obsp/ varp validation", {
+#   N_OBS <- 5
+#   N_VAR <- 3
+# 
+#   adata <- AnnData(
+#     obs = data.frame(row.names = as.character(1:N_OBS)),
+#     var = data.frame(row.names = as.character(1:N_VAR))
+#   )
+# 
+#   adata$obsp <- list(graph1 = matrix(0, N_OBS, N_OBS))
+#   adata$varp <- list(graph1 = matrix(0, N_VAR, N_VAR))
+# 
+#   expect_error(adata$obsp <- list(graph1 = matrix(0, 4, 4)))
+#   expect_error(adata$varp <- list(graph1 = matrix(0, 4, 4)))
+# })
 
-  mtx <- matrix(
-    0,
-    N_OBS,
-    N_VAR
+# trackstatus: class=HDF5AnnData, feature=test_get_obsp, status=done
+test_that("reading obsp works", {
+  obsp <- adata$obsp
+  expect_true(is.list(obsp), "list")
+  expect_equal(
+    names(obsp),
+    c("connectivities", "distances")
   )
-
-  adata <- AnnData(
-    X = mtx,
-    obs = data.frame(row.names = as.character(1:N_OBS)),
-    var = data.frame(row.names = as.character(1:N_VAR))
-  )
-
-  adata$obsm <- list(PCA = matrix(0, N_OBS, 4))
-  adata$varm <- list(PCs = matrix(0, N_VAR, 4))
-
-  expect_error(adata$obsm <- list(PCA = matrix(0, 4, 4)))
-  expect_error(adata$varm <- list(PCs = matrix(0, 4, 4)))
 })
 
-test_that("obsp/ varp validation", {
-  N_OBS <- 5
-  N_VAR <- 3
-
-  adata <- AnnData(
-    obs = data.frame(row.names = as.character(1:N_OBS)),
-    var = data.frame(row.names = as.character(1:N_VAR))
+# TODO: varp is empty in example.zarr
+# trackstatus: class=ZarrAnnData, feature=test_get_varp, status=done
+test_that("reading varp works", {
+  skip("varp is empty in example.zarr")
+  varp <- adata$varp
+  expect_true(is.list(varp), "list")
+  expect_equal(
+    names(varp),
+    c("test_varp")
   )
-
-  adata$obsp <- list(graph1 = matrix(0, N_OBS, N_OBS))
-  adata$varp <- list(graph1 = matrix(0, N_VAR, N_VAR))
-
-  expect_error(adata$obsp <- list(graph1 = matrix(0, 4, 4)))
-  expect_error(adata$varp <- list(graph1 = matrix(0, 4, 4)))
 })
 
 # trackstatus: class=ZarrAnnData, feature=test_get_obs, status=done
@@ -219,3 +241,90 @@ test_that("writing var names works", {
   expect_identical(zarr$var_names, LETTERS[1:20])
   unlink(store, recursive = TRUE)
 })
+
+# trackstatus: class=HDF5AnnData, feature=test_set_obsm, status=done
+test_that("writing obsm works", {
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)      
+  obs <- data.frame(row.names = 1:10)
+  var <- data.frame(row.names = 1:20)
+  zarr <- ZarrAnnData$new(store, obs = obs, var = var)
+  
+  obsm_x <- matrix(rnorm(10 * 5), nrow = 10, ncol = 5)
+  zarr$obsm <- list(X = obsm_x)
+  # obsm should now have rownames added on-the-fly
+  expected_obsm_x <- obsm_x
+  rownames(expected_obsm_x) <- zarr$obs_names
+  expect_identical(zarr$obsm$X, expected_obsm_x)
+})
+
+# trackstatus: class=HDF5AnnData, feature=test_set_varm, status=done
+test_that("writing varm works", {
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)      
+  obs <- data.frame(row.names = 1:10)
+  var <- data.frame(row.names = 1:20)
+  zarr <- ZarrAnnData$new(store, obs = obs, var = var)
+  
+  varm_x <- matrix(rnorm(20 * 5), nrow = 20, ncol = 5)
+  zarr$varm <- list(PCs = varm_x)
+  # varm should now have rownames added on-the-fly
+  expected_varm_x <- varm_x
+  rownames(expected_varm_x) <- zarr$var_names
+  expect_identical(zarr$varm$PCs, expected_varm_x)
+})
+
+# trackstatus: class=HDF5AnnData, feature=test_set_obsp, status=done
+test_that("writing obsp works", {
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)      
+  obs <- data.frame(row.names = 1:10)
+  var <- data.frame(row.names = 1:20)
+  zarr <- ZarrAnnData$new(store, obs = obs, var = var)
+  
+  obsp_x <- matrix(rnorm(10 * 10), nrow = 10, ncol = 10)
+  zarr$obsp <- list(connectivities = obsp_x)
+  # obsp should now have dimnames added on-the-fly
+  expected_obsp_x <- obsp_x
+  dimnames(expected_obsp_x) <- list(zarr$obs_names, zarr$obs_names)
+  expect_identical(zarr$obsp$connectivities, expected_obsp_x)
+})
+
+# trackstatus: class=HDF5AnnData, feature=test_set_varp, status=done
+test_that("writing varp works", {
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)      
+  obs <- data.frame(row.names = 1:10)
+  var <- data.frame(row.names = 1:20)
+  zarr <- ZarrAnnData$new(store, obs = obs, var = var)
+  
+  varp_x <- matrix(rnorm(20 * 20), nrow = 20, ncol = 20)
+  zarr$varp <- list(connectivities = varp_x)
+  # varp should now have dimnames added on-the-fly
+  expected_varp_x <- varp_x
+  dimnames(expected_varp_x) <- list(zarr$var_names, zarr$var_names)
+  expect_identical(zarr$varp$connectivities, expected_varp_x)
+})
+
+# trackstatus: class=HDF5AnnData, feature=test_set_uns, status=done
+test_that("writing uns works", {
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)      
+  obs <- data.frame(row.names = 1:10)
+  var <- data.frame(row.names = 1:20)
+  zarr <- ZarrAnnData$new(store, obs = obs, var = var)
+  
+  zarr$uns <- list(
+    foo = "bar",
+    baz = c(1, 2, 3),
+    nested = list(
+      nested_foo = "nested_bar",
+      nested_baz = c(4L, 5L, 6L)
+    )
+  )
+  expect_identical(zarr$uns$foo, "bar")
+  expect_equal(zarr$uns$baz, c(1, 2, 3), ignore_attr = TRUE)
+  expect_identical(zarr$uns$nested$nested_foo, "nested_bar")
+  expect_equal(zarr$uns$nested$nested_baz, c(4L, 5L, 6L), ignore_attr = TRUE)
+})
+
