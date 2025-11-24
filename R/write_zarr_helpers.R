@@ -26,9 +26,6 @@ write_zarr_element <- function(
 ) { 
   compression <- match.arg(compression)
 
-  # Delete the path if it already exists
-  # TODO: https://github.com/keller-mark/pizzarr/issues/69
-
   # Sparse matrices
   write_fun <-
     if (inherits(value, "sparseMatrix")) { # Sparse matrices
@@ -99,10 +96,6 @@ write_zarr_element <- function(
 #' @param encoding The encoding type to set
 #' @param version The encoding version to set
 write_zarr_encoding <- function(store, name, encoding, version) {
-  # g <- pizzarr::zarr_open(store, path = name)
-  # attrs <- g$get_attrs()
-  # attrs$set_item("encoding-type", encoding)
-  # attrs$set_item("encoding-version", version)
   attrs <- write_zattrs(file.path(store, name),
                         new.zattrs = list(`encoding-type` = encoding,
                                           `encoding-version` = version))
@@ -173,7 +166,6 @@ write_zarr_sparse_array <- function(value,
   }
 
   # Write sparse matrix
-  # g <- pizzarr::zarr_open_group(store, path = name)
   create_zarr_group(store, name)
   zarr_write_compressed(store, paste0(name, "/indices"), attr(value, indices_attr), compression, overwrite = overwrite)
   zarr_write_compressed(store, paste0(name, "/indptr"), value@p, compression, overwrite = overwrite)
@@ -183,7 +175,6 @@ write_zarr_sparse_array <- function(value,
   write_zarr_encoding(store, name, type, version)
 
   # Write shape attribute
-  # g$get_attrs()$set_item("shape", dim(value))
   write_zattrs(file.path(store, name), list(shape = dim(value)))
 }
 
@@ -201,7 +192,6 @@ write_zarr_sparse_array <- function(value,
 #' @param version Encoding version of the element to write
 write_zarr_nullable_boolean <- function(value, store, name, compression, version = "0.1.0", overwrite = FALSE) {
   # write mask and values
-  # pizzarr::zarr_open_group(store, path = name)
   create_zarr_group(store, name)
   value_no_na <- value
   value_no_na[is.na(value_no_na)] <- FALSE
@@ -227,7 +217,6 @@ write_zarr_nullable_boolean <- function(value, store, name, compression, version
 #' @param version Encoding version of the element to write
 write_zarr_nullable_integer <- function(value, store, name, compression, version = "0.1.0", overwrite = FALSE) {
   # write mask and values
-  # pizzarr::zarr_open_group(store, path = name)
   create_zarr_group(store, name)
   value_no_na <- value
   value_no_na[is.na(value_no_na)] <- -1L
@@ -265,10 +254,6 @@ write_zarr_string_array <- function(value,
   }
 
   data <- array(data = value, dim = dims)
-  # TODO: existing _index does not allow overwriting, so shall we keep overwrite=TRUE here ?
-  # pizzarr::zarr_create_array(data,
-  #                            store = store, path = name, dtype = "|O",
-  #                            object_codec = object_codec, shape = dims, overwrite = TRUE)
   Rarr::write_zarr_array(data,
                          zarr_array_path = file.path(store, name),
                          chunk_dim = dims)
@@ -294,7 +279,6 @@ write_zarr_categorical <- function(value,
                                    compression,
                                    version = "0.2.0",
                                    overwrite = FALSE) {
-  # pizzarr::zarr_open_group(store, path = name)
   create_zarr_group(store, name)
   zarr_write_compressed(store, paste0(name, "/categories"), levels(value), compression, overwrite = overwrite)
   zarr_write_compressed(store, paste0(name, "/codes"), as.integer(value), compression, overwrite = overwrite)
@@ -369,7 +353,6 @@ write_zarr_numeric_scalar <- function(value,
 #' one of `"none"`, `"gzip"` or `"lzf"`. Defaults to `"none"`.
 #' @param version Encoding version of the element to write
 write_zarr_mapping <- function(value, store, name, compression, version = "0.1.0", overwrite = FALSE) {
-  # pizzarr::zarr_open_group(store, path = name)
   create_zarr_group(store, name)
 
   # Write mapping elements
@@ -397,7 +380,6 @@ write_zarr_mapping <- function(value, store, name, compression, version = "0.1.0
 #' @param version Encoding version of the element to write
 write_zarr_data_frame <- function(value, store, name, compression, index = NULL,
                                   version = "0.2.0", overwrite = FALSE) {
-  # g <- pizzarr::zarr_open_group(store, path = name)
   create_zarr_group(store, name)
   write_zarr_encoding(store, name, "dataframe", version)
 
@@ -455,7 +437,6 @@ write_zarr_data_frame <- function(value, store, name, compression, index = NULL,
 #' @param index_name Name of the data frame column storing the index
 write_zarr_data_frame_index <- function(value, store, name, compression, index_name, overwrite = FALSE) {
   if (!zarr_path_exists(store, name)) {
-    # g <- pizzarr::zarr_open_group(store, path = name)
     create_zarr_group(store, name)
     write_zarr_encoding(store, name, "dataframe", "0.2.0")
   }
@@ -469,8 +450,6 @@ write_zarr_data_frame_index <- function(value, store, name, compression, index_n
   write_zarr_element(value, store, paste0(name, "/", index_name), overwrite = overwrite)
 
   # Write data frame index attribute
-  # g <- pizzarr::zarr_open_group(store, path = name)
-  # g$get_attrs()$set_item("_index", index_name)
   write_zattrs(file.path(store, name), list(`_index` = index_name))
 }
 
@@ -493,27 +472,21 @@ write_empty_zarr <- function(store, obs, var, compression, version = "0.1.0") {
   write_zarr_element(obs[, integer(0)], store, "/obs", compression)
   write_zarr_element(var[, integer(0)], store, "/var", compression)
 
-  # pizzarr::zarr_open_group(store, path = "layers")
   create_zarr_group(store, "layers")
   write_zarr_encoding(store, "/layers", "dict", "0.1.0")
 
-  # pizzarr::zarr_open_group(store, path = "obsm")
   create_zarr_group(store, "obsm")
   write_zarr_encoding(store, "/obsm", "dict", "0.1.0")
 
-  # pizzarr::zarr_open_group(store, path = "obsp")
   create_zarr_group(store, "obsp")
   write_zarr_encoding(store, "/obsp", "dict", "0.1.0")
 
-  # pizzarr::zarr_open_group(store, path = "uns")
   create_zarr_group(store, "uns")
   write_zarr_encoding(store, "/uns", "dict", "0.1.0")
 
-  # pizzarr::zarr_open_group(store, path = "varm")
   create_zarr_group(store, "varm")
   write_zarr_encoding(store, "/varm", "dict", "0.1.0")
 
-  # pizzarr::zarr_open_group(store, path = "varp")
   create_zarr_group(store, "varp")
   write_zarr_encoding(store, "/varp", "dict", "0.1.0")
 }
@@ -529,22 +502,6 @@ write_empty_zarr <- function(store, obs, var, compression, version = "0.1.0") {
 #'
 #' @return Whether the `target_path` exists in `store`
 zarr_path_exists <- function(store, target_path) {
-  # store <- pizzarr::zarr_open(store, path = "")
-  # result <- tryCatch({
-  #   if (store$contains_item(target_path)) {
-  #     # This should work for DirectoryStore but not yet for MemoryStore.
-  #     return(TRUE)
-  #   }
-  #   # Fall back to use get_item.
-  #   # This should work for any store but can fail if DirectoryStore tries to read a directory as a file.
-  #   store$get_item(target_path)
-  #   return(TRUE)
-  # }, error = function(cond) {
-  #   if (pizzarr::is_key_error(cond)) {
-  #     return(FALSE)
-  #   }
-  #   stop(cond)
-  # }, warnings = function(w) {})
   zarr <- file.path(store, target_path)
   if(!dir.exists(zarr)){
     return(FALSE)
@@ -590,28 +547,7 @@ zarr_write_compressed <- function(store,
     dims <- length(value)
   }
 
-  # object_codec <- NA
-  # if (is.integer(value)) {
-  #   dtype <- "<i4" # TODO: make 32-vs-64-bit configurable
-  # } else if (is.numeric(value)) {
-  #   dtype <- "<f4" # TODO: make 32-vs-64-bit configurable
-  # } else if (is.logical(value)) {
-  #   dtype <- "|b1"
-  # } else if (is.character(value)) {
-  #   dtype <- "|O"
-  #   object_codec <- pizzarr::VLenUtf8Codec$new()
-  # } else {
-  #   stop("Unsupported data type for writing to Zarr: ", class(value))
-  # }
   data <- array(data = value, dim = dims)
-  # pizzarr::zarr_create_array(data,
-  #                            store = store,
-  #                            path = name,
-  #                            shape = dims,
-  #                            dtype = dtype,
-  #                            object_codec = object_codec,
-  #                            chunks = chunks,
-  #                            overwrite = overwrite) # TODO: compression
   Rarr::write_zarr_array(data,
                          zarr_array_path = file.path(store, name),
                          chunk_dim = dims)
