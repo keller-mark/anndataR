@@ -1,11 +1,7 @@
-skip_if_not_installed("pizzarr")
-
-# file <- system.file("extdata", "example.zarr", package = "anndataR")
 file <- system.file("extdata", "example.zarr.zip", package = "anndataR")
 td <- tempdir(check = TRUE)
 unzip(file, exdir = td)
-file <- file.path(td, "example.zarr")
-store <- pizzarr::DirectoryStore$new(file)
+store <- file.path(td, "example.zarr")
 
 test_that("opening H5AD works", {
   adata <- ZarrAnnData$new(store)
@@ -130,35 +126,42 @@ test_that("reading var names works", {
 
 # SETTERS ----------------------------------------------------------------
 test_that("creating empty Zarr works", {
-  empty_store <- pizzarr::MemoryStore$new()
+  empty_store <- tempfile(fileext = ".zarr")
+  create_zarr(store = empty_store)
   expect_silent(ZarrAnnData$new(empty_store))
+  unlink(empty_store, recursive = TRUE)
 })
 
 # trackstatus: class=ZarrAnnData, feature=test_set_X, status=done
 test_that("writing X works", {
-  store <- pizzarr::MemoryStore$new()
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
 
   X <- matrix(rnorm(10 * 20), nrow = 10, ncol = 20)
   expect_silent(zarr$X <- X)
+  unlink(store, recursive = TRUE)
 })
 
 # trackstatus: class=ZarrAnnData, feature=test_set_layers, status=done
 test_that("writing layers works", {
-  store <- pizzarr::MemoryStore$new()
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)  
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
 
   X <- matrix(rnorm(10 * 20), nrow = 10, ncol = 20)
   expect_silent(zarr$layers <- list(layer1 = X, layer2 = X))
+  unlink(store, recursive = TRUE)
 })
 
 # trackstatus: class=ZarrAnnData, feature=test_set_obs, status=done
 test_that("writing obs works", {
-  store <- pizzarr::MemoryStore$new()
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)    
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
@@ -170,11 +173,13 @@ test_that("writing obs works", {
   )
   zarr$obs <- obs
   expect_identical(zarr$obs_names, paste0("Row", 1:10))
+  unlink(store, recursive = TRUE)
 })
 
 # trackstatus: class=ZarrAnnData, feature=test_set_var, status=done
 test_that("writing var works", {
-  store <- pizzarr::MemoryStore$new()
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)      
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
@@ -186,26 +191,31 @@ test_that("writing var works", {
   )
   zarr$var <- var
   expect_identical(zarr$var_names, paste0("Row", 1:20))
+  unlink(store, recursive = TRUE)
 })
 
 # trackstatus: class=ZarrAnnData, feature=test_set_obs_names, status=done
 test_that("writing obs names works", {
-  store <- pizzarr::MemoryStore$new()
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)      
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
 
   zarr$obs_names <- LETTERS[1:10]
   expect_identical(zarr$obs_names, LETTERS[1:10])
+  unlink(store, recursive = TRUE)
 })
 
 # trackstatus: class=ZarrAnnData, feature=test_set_var_names, status=done
 test_that("writing var names works", {
-  store <- pizzarr::MemoryStore$new()
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)      
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
 
   zarr$var_names <- LETTERS[1:20]
   expect_identical(zarr$var_names, LETTERS[1:20])
+  unlink(store, recursive = TRUE)
 })
