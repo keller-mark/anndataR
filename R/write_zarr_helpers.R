@@ -486,12 +486,12 @@ write_zarr_data_frame_index <- function(value, store, name, compression, index_n
 #' @param compression The compression to use when writing the element. Can be
 #' one of `"none"`, `"gzip"` or `"lzf"`. Defaults to `"none"`.
 #' @param version The anndata on-disk format version to write
-write_empty_zarr <- function(store, obs, var, compression, version = "0.1.0", overwrite = FALSE) {
+write_empty_zarr <- function(store, obs, var, compression, version = "0.1.0") {
   create_zarr(store = store)
   write_zarr_encoding(store, "/", "anndata", "0.1.0")
 
-  write_zarr_element(obs, store, "/obs", compression, overwrite = overwrite)
-  write_zarr_element(var, store, "/var", compression, overwrite = overwrite)
+  write_zarr_element(obs[, integer(0)], store, "/obs", compression)
+  write_zarr_element(var[, integer(0)], store, "/var", compression)
 
   # pizzarr::zarr_open_group(store, path = "layers")
   create_zarr_group(store, "layers")
