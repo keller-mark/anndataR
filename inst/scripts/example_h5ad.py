@@ -90,9 +90,7 @@ scanpy.tl.rank_genes_groups(adata, "leiden")
 adata.varp["test_varp"] = numpy.random.rand(adata.n_vars, adata.n_vars)
 
 # Write the H5AD file
-<<<<<<< HEAD
-adata.write("example.h5ad")
-adata.write_zarr("example.zarr")
-=======
 adata.write_h5ad("inst/extdata/example.h5ad", compression="gzip")
->>>>>>> main
+adata.write_zarr("inst/extdata/example.zarr", compression="gzip")
+# TODO: zip example.zarr too
+
