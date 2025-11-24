@@ -3,12 +3,12 @@ td <- tempdir(check = TRUE)
 unzip(file, exdir = td)
 store <- file.path(td, "example.zarr")
 
-test_that("opening H5AD works", {
-  adata <- ZarrAnnData$new(store)
+test_that("opening Zarr works", {
+  adata <- ZarrAnnData$new(store, mode = "r")
   expect_true(inherits(adata, "ZarrAnnData"))
 })
 
-adata <- ZarrAnnData$new(store)
+adata <- ZarrAnnData$new(store, mode = "r")
 
 # GETTERS ----------------------------------------------------------------
 # trackstatus: class=ZarrAnnData, feature=test_get_X, status=done
@@ -128,7 +128,7 @@ test_that("reading var names works", {
 test_that("creating empty Zarr works", {
   empty_store <- tempfile(fileext = ".zarr")
   create_zarr(store = empty_store)
-  expect_silent(ZarrAnnData$new(empty_store))
+  expect_silent(ZarrAnnData$new(empty_store, mode = "r"))
   unlink(empty_store, recursive = TRUE)
 })
 
