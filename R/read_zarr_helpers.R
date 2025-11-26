@@ -9,7 +9,7 @@
 #'
 #' @noRd
 read_zarr_encoding <- function(store, name, stop_on_error = TRUE) {
-  attrs <- read_zattrs(file.path(store,name))
+  attrs <- read_zattrs(file.path(store, name))
 
   if (!all(c("encoding-type", "encoding-version") %in% names(attrs))) {
     if (stop_on_error) {
@@ -171,7 +171,6 @@ read_zarr_sparse_array <- function(store, name, version = "0.1.0",
   data <- as.vector(read_zarr_array(store, paste0(name, "/data")))
   indices <- as.vector(read_zarr_array(store, paste0(name, "/indices")))
   indptr <- as.vector(read_zarr_array(store, paste0(name, "/indptr")))
-  # shape <- as.vector(unlist(g$get_attrs()$to_list()$shape, use.names = FALSE))
   shape <- as.vector(unlist(attrs$shape, use.names = FALSE))
 
   if (type == "csc_matrix") {
@@ -219,7 +218,6 @@ read_zarr_sparse_array <- function(store, name, version = "0.1.0",
 read_zarr_rec_array <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
 
-  # stop("Reading recarrays is not yet implemented")
   # read list of arrays
   field_names <- list.dirs(
     path = file.path(store, name),
@@ -229,7 +227,7 @@ read_zarr_rec_array <- function(store, name, version = "0.2.0") {
   setNames(
     lapply(field_names, function(x){
       as.vector(Rarr::read_zarr_array(file.path(store, name, x)))
-    }),
+    }), 
     field_names)
 }
 
@@ -343,9 +341,6 @@ read_zarr_categorical <- function(store, name, version = "0.2.0") {
   attributes <- read_zattrs(file.path(store, name))
   ordered <- attributes[["ordered"]]
   if (is.null(ordered) || is.na(ordered)) {
-    # This version of {rhdf5} doesn't yet support ENUM type attributes so we
-    # can't tell if the categorical should be ordered,
-    # see https://github.com/grimbough/rhdf5/issues/125
     warning(
       "Unable to determine if categorical '", name,
       "' is ordered, assuming it isn't"

@@ -1,10 +1,10 @@
 skip_if_not_installed("Rarr")
 
 # zarr file
-zarr_dir <- system.file("extdata", "example.zarr.zip", package = "anndataR")
+zarr_dir <- system.file("extdata", "example2.zarr.zip", package = "anndataR")
 td <- tempdir(check = TRUE)
 unzip(zarr_dir, exdir = td)
-store <- file.path(td, "example.zarr")
+store <- file.path(td, "example2.zarr")
 
 test_that("reading encoding works", {
   encoding <- read_zarr_encoding(store, "obs")
@@ -35,7 +35,7 @@ test_that("reading sparse matrices works", {
 
 # TODO: doesn't work anymore ?
 test_that("reading recarrays works", {
-  skip("Skipping recarray test")
+  skip("Skipping recarray test, not implemented in Rarr yet")
   array_list <- read_zarr_rec_array(
     store,
     "uns/rank_genes_groups/logfoldchanges"
@@ -78,11 +78,13 @@ test_that("reading 1D nullable arrays works", {
 })
 
 test_that("reading string scalars works", {
+  skip("Skipping string scalar test, not implemented in Rarr yet")
   scalar <- read_zarr_string_scalar(store, "uns/StringScalar")
   expect_equal(scalar, "A string")
 })
 
 test_that("reading numeric scalars works", {
+  skip("Skipping numeric scalar test, not implemented in Rarr yet")
   scalar <- read_zarr_numeric_scalar(store, "uns/IntScalar")
   expect_equal(scalar, 1)
 })
@@ -128,7 +130,6 @@ test_that("reading Zarr as SingleCellExperiment works", {
 test_that("reading Zarr as Seurat works", {
   skip_if_not_installed("SeuratObject")
 
-  # TODO: remove this suppression when the to_seurat, from_seurat functions are updated.
   seurat <- suppressWarnings(read_zarr(store, as = "Seurat"))
   expect_s4_class(seurat, "Seurat")
 })

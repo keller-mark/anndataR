@@ -6,14 +6,14 @@
 #' @param name name of the group
 #' @param version zarr version
 #' @export
-create_zarr_group <- function(store, name, version = "v2"){
+create_zarr_group <- function(store, name, version = "v2") {
   split.name <- strsplit(name, split = "\\/")[[1]]
-  if(length(split.name) > 1){
+  if (length(split.name) > 1) {
     split.name <- vapply(seq_len(length(split.name)),
                          function(x) paste(split.name[seq_len(x)], collapse = "/"),
                          FUN.VALUE = character(1))
-    split.name <- rev(tail(split.name,2))
-    if(!dir.exists(file.path(store,split.name[2])))
+    split.name <- rev(tail(split.name, 2))
+    if (!dir.exists(file.path(store, split.name[2])))
       create_zarr_group(store = store, name = split.name[2])
   }
   dir.create(file.path(store, split.name[1]), showWarnings = FALSE)
@@ -34,15 +34,13 @@ create_zarr_group <- function(store, name, version = "v2"){
 #' @param dir the location of zarr store
 #' @param prefix prefix of the zarr store
 #' @param version zarr version
-#' 
 #' @examples
 #' dir.create(td <- tempfile())
 #' zarr_name <- "test"
 #' create_zarr(dir = td, prefix = "test")
 #' dir.exists(file.path(td, "test.zarr"))
-#' 
 #' @export
-create_zarr <- function(store, version = "v2"){
+create_zarr <- function(store, version = "v2") {
   prefix <- basename(store)
   dir <- gsub(paste0(prefix, "$"), "", store)
   create_zarr_group(store = dir, name = prefix, version = version)
@@ -66,7 +64,7 @@ read_zattrs <- function(path, s3_client = NULL) {
   path <- .normalize_array_path(path)
   zattrs_path <- paste0(path, ".zattrs")
 
-  if(!file.exists(zattrs_path))
+  if (!file.exists(zattrs_path))
     stop("The group or array does not contain attributes (.zattrs)")
 
   if (!is.null(s3_client)) {
@@ -93,21 +91,21 @@ read_zattrs <- function(path, s3_client = NULL) {
 #' @importFrom jsonlite toJSON
 #'
 #' @export
-write_zattrs <- function(path, new.zattrs = list(), overwrite = TRUE){
+write_zattrs <- function(path, new.zattrs = list(), overwrite = TRUE) {
   path <- .normalize_array_path(path)
   zattrs_path <- paste0(path, ".zattrs")
 
-  if(is.null(names(new.zattrs)))
+  if (is.null(names(new.zattrs)))
     stop("list elements should be named")
 
-  if("" %in% names(new.zattrs)){
+  if ("" %in% names(new.zattrs)) {
     message("Ignoring unnamed list elements")
     new.zattrs <- new.zattrs[which(names(new.zattrs == ""))]
   }
 
-  if(file.exists(zattrs_path)){
+  if (file.exists(zattrs_path)) {
     old.zattrs <- read_json(zattrs_path)
-    if(overwrite){
+    if (overwrite) {
       old.zattrs <- old.zattrs[setdiff(names(old.zattrs), names(new.zattrs))]
     } else {
       new.zattrs <- new.zattrs[setdiff(names(new.zattrs), names(old.zattrs))]

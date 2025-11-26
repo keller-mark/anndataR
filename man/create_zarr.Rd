@@ -21,5 +21,4 @@ dir.create(td <- tempfile())
 zarr_name <- "test"
 create_zarr(dir = td, prefix = "test")
 dir.exists(file.path(td, "test.zarr"))
-
 }
