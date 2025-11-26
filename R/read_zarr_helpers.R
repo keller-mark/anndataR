@@ -9,7 +9,7 @@
 #'
 #' @noRd
 read_zarr_encoding <- function(store, name, stop_on_error = TRUE) {
-  attrs <- read_zarr_attributes(file.path(store, name))
+  attrs <- Rarr::read_zarr_attributes(file.path(store, name))
 
   if (!all(c("encoding-type", "encoding-version") %in% names(attrs))) {
     if (stop_on_error) {
@@ -166,7 +166,7 @@ read_zarr_sparse_array <- function(store, name, version = "0.1.0",
   version <- match.arg(version)
   type <- match.arg(type)
 
-  attrs <- read_zarr_attributes(file.path(store, name))
+  attrs <- Rarr::read_zarr_attributes(file.path(store, name))
 
   data <- as.vector(read_zarr_array(store, paste0(name, "/data")))
   indices <- as.vector(read_zarr_array(store, paste0(name, "/indices")))
@@ -338,7 +338,7 @@ read_zarr_categorical <- function(store, name, version = "0.2.0") {
 
   levels <- categories
 
-  attributes <- read_zarr_attributes(file.path(store, name))
+  attributes <- Rarr::read_zarr_attributes(file.path(store, name))
   ordered <- attributes[["ordered"]]
   if (is.null(ordered) || is.na(ordered)) {
     warning(
@@ -430,7 +430,7 @@ read_zarr_data_frame <- function(store, name, include_index = TRUE,
                                  version = "0.2.0") {
   version <- match.arg(version)
 
-  attributes <- read_zarr_attributes(file.path(store, name))
+  attributes <- Rarr::read_zarr_attributes(file.path(store, name))
   index_name <- attributes$`_index`
   column_order <- attributes$`column-order`
 
@@ -470,7 +470,7 @@ read_zarr_data_frame <- function(store, name, include_index = TRUE,
 read_zarr_data_frame_index <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
 
-  attributes <- read_zarr_attributes(file.path(store, name))
+  attributes <- Rarr::read_zarr_attributes(file.path(store, name))
   index_name <- attributes$`_index`
 
   read_zarr_element(store, file.path(name, index_name))

@@ -96,7 +96,7 @@ write_zarr_element <- function(
 #' @param encoding The encoding type to set
 #' @param version The encoding version to set
 write_zarr_encoding <- function(store, name, encoding, version) {
-  attrs <- write_zarr_attributes(file.path(store, name),
+  attrs <- Rarr::write_zarr_attributes(file.path(store, name),
                         new.zattrs = list(`encoding-type` = encoding,
                                           `encoding-version` = version))
 }
@@ -175,7 +175,7 @@ write_zarr_sparse_array <- function(value,
   write_zarr_encoding(store, name, type, version)
 
   # Write shape attribute
-  write_zarr_attributes(file.path(store, name), list(shape = dim(value)))
+  Rarr::write_zarr_attributes(file.path(store, name), list(shape = dim(value)))
 }
 
 #' Write Zarr nullable boolean
@@ -417,7 +417,7 @@ write_zarr_data_frame <- function(value, store, name, compression, index = NULL,
     col_order <- numeric()
   }
 
-  write_zarr_attributes(file.path(store, name), list(`column-order` = col_order))
+  Rarr::write_zarr_attributes(file.path(store, name), list(`column-order` = col_order))
 }
 
 #' Write Zarr data frame index
@@ -449,7 +449,7 @@ write_zarr_data_frame_index <- function(value, store, name, compression, index_n
   write_zarr_element(value, store, paste0(name, "/", index_name), overwrite = overwrite)
 
   # Write data frame index attribute
-  write_zarr_attributes(file.path(store, name), list(`_index` = index_name))
+  Rarr::write_zarr_attributes(file.path(store, name), list(`_index` = index_name))
 }
 
 #' Write empty Zarr
