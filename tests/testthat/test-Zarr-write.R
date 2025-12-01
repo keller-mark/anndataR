@@ -13,6 +13,22 @@ test_that("Writing Zarr dense arrays works", {
   expect_equal(attrs[["encoding-type"]], "array")
 })
 
+test_that("Writing Zarr dense 3D arrays works", {
+  value <- array(rnorm(60), dim = c(5, 4, 3))
+  
+  expect_silent(
+    write_zarr_element(
+      value,
+      store,
+      "dense_3d_array"
+    )
+  )
+  expect_true(zarr_path_exists(store, "dense_3d_array"))
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "dense_3d_array"))
+  expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
+  expect_equal(attrs[["encoding-type"]], "array")
+})
+
 test_that("Writing Zarr sparse arrays works", {
   array <- matrix(rnorm(20), nrow = 5, ncol = 4)
 
@@ -35,6 +51,21 @@ test_that("Writing Zarr sparse arrays works", {
   attrs <- Rarr::read_zarr_attributes(file.path(store, "csr_array"))
   expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
   expect_equal(attrs[["encoding-type"]], "csr_matrix")
+})
+
+test_that("Writing dgeMatrix", {
+  value <- matrix(rnorm(20), nrow = 5, ncol = 4) |>
+    as("dMatrix") |>
+    as("generalMatrix") |>
+    as("unpackedMatrix")
+  
+  expect_silent(
+    write_zarr_element(value, store, "dgematrix")
+  )
+  expect_true(zarr_path_exists(store, "dgematrix"))
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "dgematrix"))
+  expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
+  expect_equal(attrs[["encoding-type"]], "array")
 })
 
 test_that("Writing Zarr nullable booleans works", {
