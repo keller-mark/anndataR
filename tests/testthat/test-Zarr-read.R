@@ -51,10 +51,10 @@ test_that("reading recarrays works", {
 
 test_that("reading 1D numeric arrays works", {
   array_1d <- read_zarr_dense_array(store, "obs/Int")
-  expect_vector(array_1d, ptype = integer(), size = 50)
-
+  expect_equal(array_1d, array(0L:49L))
+  
   array_1d <- read_zarr_dense_array(store, "obs/Float")
-  expect_vector(array_1d, ptype = double(), size = 50)
+  expect_equal(array_1d, array(rep(42.42, 50)))
 })
 
 test_that("reading 1D sparse numeric arrays works", {
@@ -69,8 +69,9 @@ test_that("reading 1D nullable arrays works", {
   expect_true(any(is.na(array_1d)))
 
   array_1d <- read_zarr_dense_array(store, "obs/FloatNA")
-  expect_vector(array_1d, ptype = double(), size = 50)
-  expect_true(any(is.na(array_1d)))
+  expected <- array(rep(42.42, 50))
+  expected[1] <- NA
+  expect_equal(array_1d, expected)
 
   array_1d <- read_zarr_nullable_boolean(store, "obs/BoolNA")
   expect_vector(array_1d, ptype = logical(), size = 50)
@@ -78,21 +79,18 @@ test_that("reading 1D nullable arrays works", {
 })
 
 test_that("reading string scalars works", {
-  skip("Skipping string scalar test, not implemented in Rarr yet")
   scalar <- read_zarr_string_scalar(store, "uns/StringScalar")
   expect_equal(scalar, "A string")
 })
 
 test_that("reading numeric scalars works", {
-  skip("Skipping numeric scalar test, not implemented in Rarr yet")
   scalar <- read_zarr_numeric_scalar(store, "uns/IntScalar")
   expect_equal(scalar, 1)
 })
 
 test_that("reading string arrays works", {
   array <- read_zarr_string_array(store, "uns/String")
-  expect_vector(array, ptype = character(), size = 10)
-  expect_equal(array[3], "String 2")
+  expect_equal(array, array(paste0("String ", 0L:9L)))
 
   array <- read_zarr_string_array(store, "uns/String2D")
   expect_true(is.matrix(array))

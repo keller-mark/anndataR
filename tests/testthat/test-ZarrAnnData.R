@@ -1,7 +1,7 @@
-file <- system.file("extdata", "example.zarr.zip", package = "anndataR")
+file <- system.file("extdata", "example2.zarr.zip", package = "anndataR")
 td <- tempdir(check = TRUE)
 unzip(file, exdir = td)
-store <- file.path(td, "example.zarr")
+store <- file.path(td, "example2.zarr")
 
 test_that("opening Zarr works", {
   adata <- ZarrAnnData$new(store, mode = "r")
@@ -56,10 +56,8 @@ test_that("reading obsp works", {
   )
 })
 
-# TODO: varp is empty in example.zarr
 # trackstatus: class=ZarrAnnData, feature=test_get_varp, status=done
 test_that("reading varp works", {
-  skip("varp is empty in example.zarr")
   varp <- adata$varp
   expect_true(is.list(varp), "list")
   expect_equal(

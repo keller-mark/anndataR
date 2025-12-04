@@ -118,16 +118,30 @@ read_zarr_dense_array <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
 
   # Extract the NestedArray contents as a base R array.
-  darr <- read_zarr_array(store, name)
-
-
-  # TODO: ideally, native = TRUE should take care of the row order and column order,
-  # but it doesn't
-  # If the dense array is a 1D matrix, convert to vector
-  if (length(dim(darr)) == 1) {
-    darr <- as.vector(darr)
+  data <- read_zarr_array(store, name)
+  
+  # If the array is 1D, explicitly add a dimension
+  if (is.null(dim(data))) {
+    data <- as.vector(data)
+    dim(data) <- length(data)
   }
-  darr
+  
+  # TODO: as opposed to HDF5, this is not needed in Zarr
+  # Transpose the matrix if need be
+  # if (is.matrix(data)) {
+  #   data <- t(data)
+  # } else if (is.array(data) && length(dim(data)) > 1) {
+  #   data <- aperm(data)
+  # }
+
+  # Reverse {rhdf5} coercion to factors
+  if (is.factor(data) && all(levels(data) %in% c("TRUE", "FALSE"))) {
+    dims <- dim(data)
+    data <- as.logical(data)
+    dim(data) <- dims
+  }
+  
+  data
 }
 
 read_zarr_csr_matrix <- function(store, name, version) {
@@ -299,14 +313,22 @@ read_zarr_nullable <- function(store, name, version = "0.1.0") {
 read_zarr_string_array <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
   # reads in transposed
-  string_array <- read_zarr_array(store, name)
-
-  # If the array is 1D, convert to vector
-  if (length(dim(string_array)) == 1) {
-    string_array <- as.vector(string_array)
+  data <- read_zarr_array(store, name)
+  
+  if (is.null(dim(data)) || length(dim(data)) == 1) {
+    data <- as.vector(data)
+    dim(data) <- length(data)
   }
+  
+  # TODO: as opposed to HDF5, this is not needed in Zarr
+  # transpose the matrix if need be
+  # if (is.matrix(data)) {
+  #   data <- t(data)
+  # } else if (is.array(data) && length(dim(data)) > 1) {
+  #   data <- aperm(data)
+  # }
 
-  string_array
+  data
 }
 
 #' Read Zarr categorical

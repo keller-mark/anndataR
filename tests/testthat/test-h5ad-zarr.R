@@ -2,7 +2,8 @@ skip_if_not_installed("rhdf5")
 skip_if_not_installed("Rarr")
 
 # h5ad file
-file <- hdf5r::H5File$new(system.file("extdata", "example.h5ad", package = "anndataR"), mode = "r")
+filename <- system.file("extdata", "example.h5ad", package = "anndataR")
+file <- rhdf5::H5Fopen(filename, flags = "H5F_ACC_RDONLY", native = FALSE)
 
 # zarr file
 zarr_dir <- system.file("extdata", "example2.zarr.zip", package = "anndataR")
@@ -71,7 +72,7 @@ test_that("reading 1D nullable arrays is same for h5ad and zarr", {
 
   # TODO: check this test, zarr Bools are stored as dense array hence no mask is given
   array_1d_h5ad <- read_h5ad_nullable_boolean(file, "obs/Bool")
-  array_1d_zarr <- read_zarr_dense_array(store, "obs/Bool") # TODO: read_zarr_nullable_boolean should be used instead ?
+  array_1d_zarr <- read_zarr_nullable_boolean(store, "obs/Bool") # TODO: read_zarr_nullable_boolean should be used instead ?
   expect_equal(array_1d_h5ad, array_1d_zarr)
 
   array_1d_h5ad <- read_h5ad_nullable_boolean(file, "obs/BoolNA")
@@ -102,25 +103,20 @@ test_that("reading string arrays is same for h5ad and zarr", {
 })
 
 test_that("reading mappings is same for h5ad and zarr", {
-  skip("read_zarr_mapping returns list in different order")
   mapping_h5ad <- read_h5ad_mapping(file, "uns")
   mapping_zarr <- read_zarr_mapping(store, "uns")
-
   expect_equal(mapping_h5ad, mapping_zarr)
 })
 
 test_that("reading dataframes works", {
   df_h5ad <- read_h5ad_data_frame(file, "obs")
   df_zarr <- read_zarr_data_frame(store, "obs", include_index = TRUE)
-
   expect_equal(df_h5ad, df_zarr)
 })
 
 test_that("reading H5AD as SingleCellExperiment is same for h5ad and zarr", {
   skip_if_not_installed("SingleCellExperiment")
-
-  sce_h5ad <- read_h5ad(file, to = "SingleCellExperiment")
-  sce_zarr <- read_zarr(store, to = "SingleCellExperiment")
-
+  sce_h5ad <- read_h5ad(file, as = "SingleCellExperiment")
+  sce_zarr <- read_zarr(store, as = "SingleCellExperiment")
   expect_equal(sce_h5ad, sce_zarr)
 })
