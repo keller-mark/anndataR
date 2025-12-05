@@ -414,8 +414,7 @@ ZarrAnnData <- R6::R6Class(
 
     # We don't close
     #' @description Close the Zarr store/file
-    close = function() {
-    },
+    close = function() {},
 
     #' @description See the `n_obs` field in [AnnData-usage]
     n_obs = function() {
@@ -454,7 +453,7 @@ ZarrAnnData <- R6::R6Class(
 #'
 # nolint start: object_name_linter
 as_ZarrAnnData <- function(
-    # nolint end: object_name_linter
+  # nolint end: object_name_linter
   adata,
   file,
   compression = c("none", "gzip"),

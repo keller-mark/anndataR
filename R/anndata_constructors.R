@@ -17,7 +17,12 @@ anndata_constructors <- function() {
 #'
 #' @noRd
 get_anndata_constructor <- function(
-  class = c("HDF5AnnData", "InMemoryAnnData", "ZarrAnnData", "ReticulateAnnData")
+  class = c(
+    "HDF5AnnData",
+    "InMemoryAnnData",
+    "ZarrAnnData",
+    "ReticulateAnnData"
+  )
 ) {
   # TODO: also support directly passing the correct class?
   class <- match.arg(class)

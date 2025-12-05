@@ -15,17 +15,25 @@
 create_zarr_group <- function(store, name, version = "v2") {
   split.name <- strsplit(name, split = "\\/")[[1]]
   if (length(split.name) > 1) {
-    split.name <- vapply(seq_along(split.name),
-                         function(x) paste(split.name[seq_len(x)], collapse = "/"),
-                         FUN.VALUE = character(1))
+    split.name <- vapply(
+      seq_along(split.name),
+      function(x) paste(split.name[seq_len(x)], collapse = "/"),
+      FUN.VALUE = character(1)
+    )
     split.name <- rev(tail(split.name, 2))
-    if (!dir.exists(file.path(store, split.name[2])))
+    if (!dir.exists(file.path(store, split.name[2]))) {
       create_zarr_group(store = store, name = split.name[2])
+    }
   }
   dir.create(file.path(store, split.name[1]), showWarnings = FALSE)
-  switch(version,
+  switch(
+    version,
     v2 = {
-          write("{\"zarr_format\":2}", file = file.path(store, split.name[1], ".zgroup"))},
+      write(
+        "{\"zarr_format\":2}",
+        file = file.path(store, split.name[1], ".zgroup")
+      )
+    },
     v3 = {
       stop("Currently only zarr v2 is supported!")
     },

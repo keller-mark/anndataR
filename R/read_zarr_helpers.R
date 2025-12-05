@@ -14,7 +14,9 @@ read_zarr_encoding <- function(store, name, stop_on_error = TRUE) {
   if (!all(c("encoding-type", "encoding-version") %in% names(attrs))) {
     if (stop_on_error) {
       stop(
-        "Encoding attributes not found for element '", name, "' "
+        "Encoding attributes not found for element '",
+        name,
+        "' "
       )
     } else {
       return(NULL)
@@ -45,9 +47,20 @@ read_zarr_encoding <- function(store, name, stop_on_error = TRUE) {
 #' @return Value depending on the encoding
 #'
 #' @noRd
-read_zarr_element <- function(store, name, type = NULL, version = NULL, stop_on_error = FALSE, ...) {
+read_zarr_element <- function(
+  store,
+  name,
+  type = NULL,
+  version = NULL,
+  stop_on_error = FALSE,
+  ...
+) {
   if (is.null(type)) {
-    encoding_list <- read_zarr_encoding(store, name, stop_on_error = stop_on_error)
+    encoding_list <- read_zarr_encoding(
+      store,
+      name,
+      stop_on_error = stop_on_error
+    )
     if (is.null(encoding_list)) {
       if (stop_on_error) {
         stop("No encoding info found for element '", name, "'")
@@ -60,7 +73,8 @@ read_zarr_element <- function(store, name, type = NULL, version = NULL, stop_on_
     version <- encoding_list$version
   }
 
-  read_fun <- switch(type,
+  read_fun <- switch(
+    type,
     "array" = read_zarr_dense_array,
     "rec-array" = read_zarr_rec_array,
     "csr_matrix" = read_zarr_csr_matrix,
@@ -74,8 +88,11 @@ read_zarr_element <- function(store, name, type = NULL, version = NULL, stop_on_
     "nullable-integer" = read_zarr_nullable_integer,
     "nullable-boolean" = read_zarr_nullable_boolean,
     stop(
-      "No function for reading H5AD encoding '", type,
-      "' for element '", name, "'"
+      "No function for reading H5AD encoding '",
+      type,
+      "' for element '",
+      name,
+      "'"
     )
   )
 
@@ -85,7 +102,11 @@ read_zarr_element <- function(store, name, type = NULL, version = NULL, stop_on_
     },
     error = function(e) {
       message <- paste0(
-        "Error reading element '", name, "' of type '", type, "':\n",
+        "Error reading element '",
+        name,
+        "' of type '",
+        type,
+        "':\n",
         conditionMessage(e)
       )
       if (stop_on_error) {
@@ -167,8 +188,12 @@ read_zarr_csc_matrix <- function(store, name, version) {
 #' @importFrom Matrix sparseMatrix
 #'
 #' @noRd
-read_zarr_sparse_array <- function(store, name, version = "0.1.0",
-                                   type = c("csr_matrix", "csc_matrix")) {
+read_zarr_sparse_array <- function(
+  store,
+  name,
+  version = "0.1.0",
+  type = c("csr_matrix", "csc_matrix")
+) {
   version <- match.arg(version)
   type <- match.arg(type)
 
@@ -339,7 +364,9 @@ read_zarr_categorical <- function(store, name, version = "0.2.0") {
   codes <- codes + 1
 
   if (!length(dim(codes)) == 1) {
-    stop("There is currently no support for multidimensional categorical arrays")
+    stop(
+      "There is currently no support for multidimensional categorical arrays"
+    )
   }
 
   # Set missing values
@@ -351,7 +378,8 @@ read_zarr_categorical <- function(store, name, version = "0.2.0") {
   ordered <- attributes[["ordered"]]
   if (is.null(ordered) || is.na(ordered)) {
     warning(
-      "Unable to determine if categorical '", name,
+      "Unable to determine if categorical '",
+      name,
       "' is ordered, assuming it isn't"
     )
 
@@ -407,7 +435,11 @@ read_zarr_numeric_scalar <- function(store, name, version = "0.2.0") {
 read_zarr_mapping <- function(store, name, version = "0.1.0") {
   version <- match.arg(version)
 
-  columns <- list.dirs(path = file.path(store, name), recursive = FALSE, full.names = FALSE)
+  columns <- list.dirs(
+    path = file.path(store, name),
+    recursive = FALSE,
+    full.names = FALSE
+  )
 
   # Omit Zarr metadata files from the list of columns.
   columns <- columns[!columns %in% c(".zgroup", ".zattrs", ".zarray")]
@@ -433,8 +465,12 @@ read_zarr_mapping <- function(store, name, version = "0.1.0") {
 #' @return a data.frame
 #'
 #' @noRd
-read_zarr_data_frame <- function(store, name, include_index = TRUE,
-                                 version = "0.2.0") {
+read_zarr_data_frame <- function(
+  store,
+  name,
+  include_index = TRUE,
+  version = "0.2.0"
+) {
   version <- match.arg(version)
 
   attributes <- Rarr::read_zarr_attributes(file.path(store, name))
@@ -457,7 +493,6 @@ read_zarr_data_frame <- function(store, name, include_index = TRUE,
     if (index_name == "_index") {
       rownames(df) <- index
     }
-
   }
 
   df
