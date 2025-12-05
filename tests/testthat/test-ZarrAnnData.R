@@ -73,8 +73,17 @@ test_that("reading obs works", {
   expect_equal(
     colnames(obs),
     c(
-      "Float", "FloatNA", "Int", "IntNA", "Bool", "BoolNA", "n_genes_by_counts",
-      "log1p_n_genes_by_counts", "total_counts", "log1p_total_counts", "leiden"
+      "Float",
+      "FloatNA",
+      "Int",
+      "IntNA",
+      "Bool",
+      "BoolNA",
+      "n_genes_by_counts",
+      "log1p_n_genes_by_counts",
+      "total_counts",
+      "log1p_total_counts",
+      "leiden"
     )
   )
 })
@@ -86,9 +95,17 @@ test_that("reading var works", {
   expect_equal(
     colnames(var),
     c(
-      "String", "n_cells_by_counts", "mean_counts", "log1p_mean_counts",
-      "pct_dropout_by_counts", "total_counts", "log1p_total_counts",
-      "highly_variable", "means", "dispersions", "dispersions_norm"
+      "String",
+      "n_cells_by_counts",
+      "mean_counts",
+      "log1p_mean_counts",
+      "pct_dropout_by_counts",
+      "total_counts",
+      "log1p_total_counts",
+      "highly_variable",
+      "means",
+      "dispersions",
+      "dispersions_norm"
     )
   )
 })

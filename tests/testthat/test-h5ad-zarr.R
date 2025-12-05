@@ -34,7 +34,8 @@ test_that("reading sparse matrices is same for h5ad and zarr", {
 test_that("reading recarrays works", {
   skip("read_zarr_rec_array is not implemented yet")
   array_list <- read_zarr_rec_array(
-    file, "uns/rank_genes_groups/logfoldchanges"
+    file,
+    "uns/rank_genes_groups/logfoldchanges"
   )
   expect_true(is.list(array_list))
   expect_equal(names(array_list), c("0", "1", "2", "3", "4", "5"))

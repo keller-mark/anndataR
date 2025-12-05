@@ -10,7 +10,12 @@ create_zarr(store = store)
 test_that("Writing Zarr dense arrays works", {
   array <- matrix(rnorm(20), nrow = 5, ncol = 4)
 
-  expect_silent(write_zarr_element(array, store, "dense_array", compression = "none"))
+  expect_silent(write_zarr_element(
+    array,
+    store,
+    "dense_array",
+    compression = "none"
+  ))
   expect_true(zarr_path_exists(store, "dense_array"))
   attrs <- Rarr::read_zarr_attributes(file.path(store, "dense_array"))
   expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
@@ -37,7 +42,12 @@ test_that("Writing Zarr sparse arrays works", {
   array <- matrix(rnorm(20), nrow = 5, ncol = 4)
 
   csc_array <- as(array, "CsparseMatrix")
-  expect_silent(write_zarr_element(csc_array, store, "csc_array", compression = "none"))
+  expect_silent(write_zarr_element(
+    csc_array,
+    store,
+    "csc_array",
+    compression = "none"
+  ))
   expect_true(zarr_path_exists(store, "csc_array"))
   expect_true(zarr_path_exists(store, "csc_array/data"))
   expect_true(zarr_path_exists(store, "csc_array/indices"))
@@ -47,7 +57,12 @@ test_that("Writing Zarr sparse arrays works", {
   expect_equal(attrs[["encoding-type"]], "csc_matrix")
 
   csr_array <- as(array, "RsparseMatrix")
-  expect_silent(write_zarr_element(csr_array, store, "csr_array", compression = "none"))
+  expect_silent(write_zarr_element(
+    csr_array,
+    store,
+    "csr_array",
+    compression = "none"
+  ))
   expect_true(zarr_path_exists(store, "csr_array"))
   expect_true(zarr_path_exists(store, "csr_array/data"))
   expect_true(zarr_path_exists(store, "csr_array/indices"))
@@ -153,7 +168,12 @@ test_that("Writing Zarr mappings works", {
     scalar = 2
   )
 
-  expect_silent(write_zarr_element(mapping, store, "mapping", compression = "none"))
+  expect_silent(write_zarr_element(
+    mapping,
+    store,
+    "mapping",
+    compression = "none"
+  ))
   expect_true(zarr_path_exists(store, "mapping"))
   expect_true(zarr_path_exists(store, "mapping/array"))
   expect_true(zarr_path_exists(store, "mapping/sparse"))
@@ -184,7 +204,10 @@ test_that("Writing Zarr data frames works", {
   expect_equal(attrs[["encoding-type"]], "dataframe")
   expect_true(all(c("_index", "column-order") %in% names(attrs)))
   expect_equal(attrs[["_index"]], "_index")
-  expect_identical(as.character(attrs[["column-order"]]), c("Letters", "Numbers"))
+  expect_identical(
+    as.character(attrs[["column-order"]]),
+    c("Letters", "Numbers")
+  )
 })
 
 test_that("writing Zarr from SingleCellExperiment works", {
