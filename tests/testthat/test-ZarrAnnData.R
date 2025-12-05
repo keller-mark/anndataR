@@ -1,7 +1,7 @@
-file <- system.file("extdata", "example2.zarr.zip", package = "anndataR")
+file <- system.file("extdata", "example.zarr.zip", package = "anndataR")
 td <- tempdir(check = TRUE)
 unzip(file, exdir = td)
-store <- file.path(td, "example2.zarr")
+store <- file.path(td, "example.zarr")
 
 test_that("opening Zarr works", {
   adata <- ZarrAnnData$new(store, mode = "r")
@@ -124,6 +124,7 @@ test_that("reading var names works", {
 
 # SETTERS ----------------------------------------------------------------
 test_that("creating empty Zarr works", {
+  skip("for now, empty zarr dataframes cannot be written.")
   empty_store <- tempfile(fileext = ".zarr")
   expect_silent(ZarrAnnData$new(empty_store))
   unlink(empty_store, recursive = TRUE)

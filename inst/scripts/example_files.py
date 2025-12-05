@@ -4,7 +4,7 @@ import scanpy  # scanpy v1.11.4
 import numpy  # numpy v2.2.6
 import pandas  # pandas v2.3.0
 import scipy.sparse  # scipy v1.14.1
-import zarr  # zarr 2.18.7
+import zarr  # zarr 2.14.2
 
 import os
 import shutil
