@@ -23,16 +23,15 @@ ZarrAnnData <- R6::R6Class(
     .close_on_finalize = FALSE,
     .compression = NULL,
     
-    # TODO: is there a validation function in Rarr ? 
-    # .check_file_valid = function() {
-    #   if (!Rarr::is_valid(private$.zarrobj)) {
-    #     cli_abort(
-    #       paste(
-    #         "The Zarr file handle is not valid, it has probably been closed"
-    #       )
-    #     )
-    #   }
-    # },
+    .check_file_valid = function() {
+      if (!zarr_path_exists(private$.zarrobj)) {
+        cli_abort(
+          paste(
+            "The Zarr file does not exist, or not a zarr file/store!"
+          )
+        )
+      }
+    },
     
     #' @description Close the Zarr file when the object is garbage collected
     finalize = function() {
@@ -45,7 +44,7 @@ ZarrAnnData <- R6::R6Class(
   active = list(
     #' @field X See [AnnData-usage]
     X = function(value) {
-      # private$.check_file_valid()
+      private$.check_file_valid()
       
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_X, status=done
@@ -69,7 +68,7 @@ ZarrAnnData <- R6::R6Class(
     },
     #' @field layers See [AnnData-usage]
     layers = function(value) {
-      # private$.check_file_valid()
+      private$.check_file_valid()
       
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_layers, status=done
@@ -93,7 +92,7 @@ ZarrAnnData <- R6::R6Class(
     },
     #' @field obsm See [AnnData-usage]
     obsm = function(value) {
-      # private$.check_file_valid()
+      private$.check_file_valid()
       
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_obsm, status=done
@@ -118,7 +117,7 @@ ZarrAnnData <- R6::R6Class(
     },
     #' @field varm See [AnnData-usage]
     varm = function(value) {
-      # private$.check_file_valid()
+      private$.check_file_valid()
       
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_varm, status=done
@@ -143,7 +142,7 @@ ZarrAnnData <- R6::R6Class(
     },
     #' @field obsp See [AnnData-usage]
     obsp = function(value) {
-      # private$.check_file_valid()
+      private$.check_file_valid()
       
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_obsp, status=done
@@ -167,7 +166,7 @@ ZarrAnnData <- R6::R6Class(
     },
     #' @field varp See [AnnData-usage]
     varp = function(value) {
-      # private$.check_file_valid()
+      private$.check_file_valid()
       
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_varp, status=done
@@ -191,7 +190,7 @@ ZarrAnnData <- R6::R6Class(
     },
     #' @field obs See [AnnData-usage]
     obs = function(value) {
-      # private$.check_file_valid()
+      private$.check_file_valid()
       
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_obs, status=done
@@ -208,7 +207,7 @@ ZarrAnnData <- R6::R6Class(
     },
     #' @field var See [AnnData-usage]
     var = function(value) {
-      # private$.check_file_valid()
+      private$.check_file_valid()
       
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_var, status=done
@@ -225,7 +224,7 @@ ZarrAnnData <- R6::R6Class(
     },
     #' @field obs_names See [AnnData-usage]
     obs_names = function(value) {
-      # private$.check_file_valid()
+      private$.check_file_valid()
       
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_obs_names, status=done
@@ -237,7 +236,7 @@ ZarrAnnData <- R6::R6Class(
     },
     #' @field var_names See [AnnData-usage]
     var_names = function(value) {
-      # private$.check_file_valid()
+      private$.check_file_valid()
       
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_var_names, status=done
@@ -249,7 +248,7 @@ ZarrAnnData <- R6::R6Class(
     },
     #' @field uns See [AnnData-usage]
     uns = function(value) {
-      # private$.check_file_valid()
+      private$.check_file_valid()
       
       if (missing(value)) {
         # trackstatus: class=ZarrAnnData, feature=get_uns, status=done
@@ -293,19 +292,19 @@ ZarrAnnData <- R6::R6Class(
     #' create a new one. If any additional slot arguments are set an existing
     #' file will be overwritten.
     initialize = function(
-    file,
-    X = NULL,
-    obs = NULL,
-    var = NULL,
-    layers = NULL,
-    obsm = NULL,
-    varm = NULL,
-    obsp = NULL,
-    varp = NULL,
-    uns = NULL,
-    shape = NULL,
-    mode = c("a", "r", "r+", "w", "w-", "x"),
-    compression = c("none", "gzip", "lzf")
+      file,
+      X = NULL,
+      obs = NULL,
+      var = NULL,
+      layers = NULL,
+      obsm = NULL,
+      varm = NULL,
+      obsp = NULL,
+      varp = NULL,
+      uns = NULL,
+      shape = NULL,
+      mode = c("a", "r", "r+", "w", "w-", "x"),
+      compression = c("none", "gzip", "lzf")
     ) {
       check_requires("ZarrAnnData", "Rarr", where = "Bioc")
       
@@ -356,10 +355,8 @@ ZarrAnnData <- R6::R6Class(
         } 
       }
       
-      # TODO: check if empty
-      # is_empty <- nrow(rhdf5::h5ls(file)) == 0L
-      is_empty <- TRUE
-      
+      is_empty <- is_zarr_empty(file)
+
       if (!is_readonly) {
         if (!is_empty) {
           cli_warn(
@@ -376,16 +373,13 @@ ZarrAnnData <- R6::R6Class(
         }
       }
       
-      # TODO: attr in Zarr ?
       # File is supposed to exist by now. Check if it is a valid Zarr file
-      # attrs <- rhdf5::h5readAttributes(file, "/")
-      # if (!all(c("encoding-type", "encoding-version") %in% names(attrs))) {
-      #   path <- rhdf5::H5Fget_name(file)
-      #   cli_abort(c(
-      #     "File {.file {path}} is not a valid Zarr file.",
-      #     i = "Either the file is not an Zarr file or it was created with {.pkg anndata<0.8.0}."
-      #   ))
-      # }
+      attrs <- Rarr::read_zarr_attributes(store)
+      if (!all(c("encoding-type", "encoding-version") %in% names(attrs))) {
+        cli_abort(c(
+          "File {.file {store}} is not a valid Zarr file."
+        ))
+      }
       
       # Set the file path
       private$.zarrobj <- file
@@ -427,7 +421,7 @@ ZarrAnnData <- R6::R6Class(
     n_obs = function() {
       nrow(self$obs)
     },
-    
+
     #' @description See the `n_vars` field in [AnnData-usage]
     n_vars = function() {
       nrow(self$var)
@@ -471,7 +465,7 @@ as_ZarrAnnData <- function(
       "{.arg adata} must be a {.cls AbstractAnnData} but has class {.cls {class(adata)}}"
     )
   }
-  
+
   mode <- match.arg(mode)
   ZarrAnnData$new(
     file = file,

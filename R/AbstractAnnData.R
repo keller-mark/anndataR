@@ -300,13 +300,13 @@ AbstractAnnData <- R6::R6Class(
       file,
       compression = c("none", "gzip", "lzf"),
       mode = c("w-", "r", "r+", "a", "w", "x")
-      ) {
-        as_ZarrAnnData(
-          adata = self,
-          file = file,
-          compression = compression,
-          mode = mode
-        )
+    ) {
+      as_ZarrAnnData(
+        adata = self,
+        file = file,
+        compression = compression,
+        mode = mode
+      )
     },
     #' @description
     #' Write the `AnnData` object to an H5AD file

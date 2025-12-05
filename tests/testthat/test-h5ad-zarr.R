@@ -72,7 +72,7 @@ test_that("reading 1D nullable arrays is same for h5ad and zarr", {
 
   # TODO: check this test, zarr Bools are stored as dense array hence no mask is given
   array_1d_h5ad <- read_h5ad_nullable_boolean(file, "obs/Bool")
-  array_1d_zarr <- read_zarr_nullable_boolean(store, "obs/Bool") # TODO: read_zarr_nullable_boolean should be used instead ?
+  array_1d_zarr <- read_zarr_nullable_boolean(store, "obs/Bool")
   expect_equal(array_1d_h5ad, array_1d_zarr)
 
   array_1d_h5ad <- read_h5ad_nullable_boolean(file, "obs/BoolNA")

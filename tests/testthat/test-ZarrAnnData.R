@@ -129,7 +129,7 @@ test_that("writing X works", {
 # trackstatus: class=ZarrAnnData, feature=test_set_layers, status=done
 test_that("writing layers works", {
   store <- tempfile(fileext = ".zarr")
-  create_zarr(store = store)  
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
@@ -142,7 +142,7 @@ test_that("writing layers works", {
 # trackstatus: class=ZarrAnnData, feature=test_set_obs, status=done
 test_that("writing obs works", {
   store <- tempfile(fileext = ".zarr")
-  create_zarr(store = store)    
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
@@ -160,7 +160,7 @@ test_that("writing obs works", {
 # trackstatus: class=ZarrAnnData, feature=test_set_var, status=done
 test_that("writing var works", {
   store <- tempfile(fileext = ".zarr")
-  create_zarr(store = store)      
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
@@ -178,7 +178,7 @@ test_that("writing var works", {
 # trackstatus: class=ZarrAnnData, feature=test_set_obs_names, status=done
 test_that("writing obs names works", {
   store <- tempfile(fileext = ".zarr")
-  create_zarr(store = store)      
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
@@ -191,7 +191,7 @@ test_that("writing obs names works", {
 # trackstatus: class=ZarrAnnData, feature=test_set_var_names, status=done
 test_that("writing var names works", {
   store <- tempfile(fileext = ".zarr")
-  create_zarr(store = store)      
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
@@ -204,11 +204,10 @@ test_that("writing var names works", {
 # trackstatus: class=HDF5AnnData, feature=test_set_obsm, status=done
 test_that("writing obsm works", {
   store <- tempfile(fileext = ".zarr")
-  create_zarr(store = store)      
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
-  
   obsm_x <- matrix(rnorm(10 * 5), nrow = 10, ncol = 5)
   zarr$obsm <- list(X = obsm_x)
   # obsm should now have rownames added on-the-fly
@@ -220,11 +219,11 @@ test_that("writing obsm works", {
 # trackstatus: class=HDF5AnnData, feature=test_set_varm, status=done
 test_that("writing varm works", {
   store <- tempfile(fileext = ".zarr")
-  create_zarr(store = store)      
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
-  
+
   varm_x <- matrix(rnorm(20 * 5), nrow = 20, ncol = 5)
   zarr$varm <- list(PCs = varm_x)
   # varm should now have rownames added on-the-fly
@@ -236,11 +235,11 @@ test_that("writing varm works", {
 # trackstatus: class=HDF5AnnData, feature=test_set_obsp, status=done
 test_that("writing obsp works", {
   store <- tempfile(fileext = ".zarr")
-  create_zarr(store = store)      
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
-  
+
   obsp_x <- matrix(rnorm(10 * 10), nrow = 10, ncol = 10)
   zarr$obsp <- list(connectivities = obsp_x)
   # obsp should now have dimnames added on-the-fly
@@ -252,11 +251,10 @@ test_that("writing obsp works", {
 # trackstatus: class=HDF5AnnData, feature=test_set_varp, status=done
 test_that("writing varp works", {
   store <- tempfile(fileext = ".zarr")
-  create_zarr(store = store)      
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
-  
   varp_x <- matrix(rnorm(20 * 20), nrow = 20, ncol = 20)
   zarr$varp <- list(connectivities = varp_x)
   # varp should now have dimnames added on-the-fly
@@ -268,11 +266,10 @@ test_that("writing varp works", {
 # trackstatus: class=HDF5AnnData, feature=test_set_uns, status=done
 test_that("writing uns works", {
   store <- tempfile(fileext = ".zarr")
-  create_zarr(store = store)      
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
-  
   zarr$uns <- list(
     foo = "bar",
     baz = c(1, 2, 3),
@@ -286,4 +283,3 @@ test_that("writing uns works", {
   expect_identical(zarr$uns$nested$nested_foo, "nested_bar")
   expect_equal(zarr$uns$nested$nested_baz, c(4L, 5L, 6L), ignore_attr = TRUE)
 })
-

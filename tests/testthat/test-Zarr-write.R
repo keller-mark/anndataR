@@ -1,7 +1,7 @@
 skip_if_not_installed("Rarr")
 
 store <- tempfile(fileext = ".zarr")
-if(dir.exists(store)){
+if (dir.exists(store)) {
   unlink(store, recursive = TRUE)
 }
 

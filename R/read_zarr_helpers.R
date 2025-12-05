@@ -92,7 +92,7 @@ read_zarr_element <- function(store, name, type = NULL, version = NULL, stop_on_
         stop(message)
       } else {
         warning(message)
-        return(NULL)
+        NULL
       }
     }
   )
@@ -100,7 +100,7 @@ read_zarr_element <- function(store, name, type = NULL, version = NULL, stop_on_
 
 read_zarr_array <- function(store, name) {
   zarr_arr <- Rarr::read_zarr_array(file.path(store, name))
-  return(zarr_arr)
+  zarr_arr
 }
 
 #' Read Zarr dense array
@@ -125,14 +125,6 @@ read_zarr_dense_array <- function(store, name, version = "0.2.0") {
     data <- as.vector(data)
     dim(data) <- length(data)
   }
-  
-  # TODO: as opposed to HDF5, this is not needed in Zarr
-  # Transpose the matrix if need be
-  # if (is.matrix(data)) {
-  #   data <- t(data)
-  # } else if (is.array(data) && length(dim(data)) > 1) {
-  #   data <- aperm(data)
-  # }
 
   # Reverse {rhdf5} coercion to factors
   if (is.factor(data) && all(levels(data) %in% c("TRUE", "FALSE"))) {
@@ -239,9 +231,9 @@ read_zarr_rec_array <- function(store, name, version = "0.2.0") {
     full.names = FALSE
   )
   setNames(
-    lapply(field_names, function(x){
+    lapply(field_names, function(x) {
       as.vector(Rarr::read_zarr_array(file.path(store, name, x)))
-    }), 
+    }),
     field_names)
 }
 
@@ -296,7 +288,7 @@ read_zarr_nullable <- function(store, name, version = "0.1.0") {
   element <- values
   element[mask] <- NA
 
-  return(element)
+  element
 }
 
 #' Read Zarr string array
@@ -323,14 +315,6 @@ read_zarr_string_array <- function(store, name, version = "0.2.0") {
   # convert "NA" to NA (as in rhdf5:::.h5postProcessDataset) 
   data[data == "NA"] <- NA
   
-  # TODO: as opposed to HDF5, this is not needed in Zarr
-  # transpose the matrix if need be
-  # if (is.matrix(data)) {
-  #   data <- t(data)
-  # } else if (is.array(data) && length(dim(data)) > 1) {
-  #   data <- aperm(data)
-  # }
-
   data
 }
 
@@ -390,8 +374,7 @@ read_zarr_categorical <- function(store, name, version = "0.2.0") {
 #' @noRd
 read_zarr_string_scalar <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
-  scalar <- as.character(read_zarr_array(store, name))
-  return(scalar)
+  as.character(read_zarr_array(store, name))
 }
 
 #' Read Zarr numeric scalar
@@ -407,8 +390,7 @@ read_zarr_string_scalar <- function(store, name, version = "0.2.0") {
 #' @noRd
 read_zarr_numeric_scalar <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
-  scalar <- as.numeric(read_zarr_array(store, name))
-  return(scalar)
+  as.numeric(read_zarr_array(store, name))
 }
 
 #' Read Zarr mapping

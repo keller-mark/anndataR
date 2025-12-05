@@ -17,12 +17,12 @@
 #' writing functions as it contains additional boilerplate to make sure
 #' elements are written correctly.
 write_zarr_element <- function(
-    value, 
-    store, 
-    name, 
-    compression = c("none", "gzip", "lzf"), 
-    stop_on_error = FALSE, 
-    ...
+  value, 
+  store, 
+  name, 
+  compression = c("none", "gzip", "lzf"), 
+  stop_on_error = FALSE, 
+  ...
 ) { 
   compression <- match.arg(compression)
 
@@ -79,7 +79,7 @@ write_zarr_element <- function(
         stop(message)
       } else {
         warning(message)
-        return(NULL)
+        NULL
       }
     }
   )
@@ -96,9 +96,9 @@ write_zarr_element <- function(
 #' @param encoding The encoding type to set
 #' @param version The encoding version to set
 write_zarr_encoding <- function(store, name, encoding, version) {
-  attrs <- Rarr::write_zarr_attributes(file.path(store, name),
-                        new.zattrs = list(`encoding-type` = encoding,
-                                          `encoding-version` = version))
+  Rarr::write_zarr_attributes(file.path(store, name),
+                              new.zattrs = list(`encoding-type` = encoding,
+                                                `encoding-version` = version))
 }
 
 #' Write Zarr dense array
@@ -253,14 +253,12 @@ write_zarr_string_array <- function(value,
     dims <- length(value)
   }
 
-  # convert to array 
-  # data <- array(data = value, dim = dims)
-  
+
   # replace NA to "NA" (as in rhdf5:::.h5postProcessDataset) 
   # to read as "NA" -> NA later after Rarr:read_zarr_array
   value[is.na(value)] <- "NA"
-  data <- array(data = value, dim = dims)
   
+  data <- array(data = value, dim = dims)
   Rarr::write_zarr_array(data,
                          zarr_array_path = file.path(store, name),
                          chunk_dim = dims)
@@ -287,9 +285,6 @@ write_zarr_categorical <- function(value,
                                    version = "0.2.0",
                                    overwrite = FALSE) {
   create_zarr_group(store, name)
-  # zarr_write_compressed(store, paste0(name, "/categories"), levels(value), compression, overwrite = overwrite)
-  # zarr_write_compressed(store, paste0(name, "/codes"), as.integer(value), compression, overwrite = overwrite)
-  # zarr_write_compressed(store, paste0(name, "/ordered"), is.ordered(value), compression, overwrite = overwrite)
   
   categories <- levels(value)
   
@@ -317,7 +312,7 @@ write_zarr_categorical <- function(value,
   )
   
   # Write ordered attribute
-  Rarr::write_zarr_attributes(file.path(store,name), 
+  Rarr::write_zarr_attributes(file.path(store, name),
                               new.zattrs = list("ordered" = is.ordered(value)))
 
 }
@@ -537,20 +532,19 @@ write_empty_zarr <- function(store, obs, var, compression, version = "0.1.0") {
 #' @return Whether the `target_path` exists in `store`
 zarr_path_exists <- function(store, target_path) {
   zarr <- file.path(store, target_path)
-  if(!dir.exists(zarr)){
-    return(FALSE)
+  if (!dir.exists(zarr)) {
+    FALSE
   } else {
     list_files <- list.files(path = zarr,
                              full.names = FALSE,
                              recursive = FALSE,
                              all.files = TRUE)
-    if(any(c(".zarray", ".zattrs", ".zgroup") %in% list_files)){
-      return(TRUE)
+    if (any(c(".zarray", ".zattrs", ".zgroup") %in% list_files)) {
+      TRUE
     } else {
-      return(FALSE)
+      FALSE
     }
   }
-  return(result)
 }
 
 #' Zarr write compressed

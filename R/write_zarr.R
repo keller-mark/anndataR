@@ -91,11 +91,11 @@
 #'   adata$write_zarr(zarr_store)
 #' }
 write_zarr <- function(
-    object,
-    path,
-    compression = c("none", "gzip", "lzf"),
-    mode = c("w-", "r", "r+", "a", "w", "x"),
-    ...
+  object,
+  path,
+  compression = c("none", "gzip", "lzf"),
+  mode = c("w-", "r", "r+", "a", "w", "x"),
+  ...
 ) {
   mode <- match.arg(mode)
   adata <- if (inherits(object, "AbstractAnnData")) {
