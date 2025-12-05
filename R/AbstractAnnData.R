@@ -336,9 +336,9 @@ AbstractAnnData <- R6::R6Class(
     #'
     #' @return `path` invisibly
     write_zarr = function(
-    path,
-    compression = c("none", "gzip"),
-    mode = c("w-", "r", "r+", "a", "w", "x")
+      path,
+      compression = c("none", "gzip"),
+      mode = c("w-", "r", "r+", "a", "w", "x")
     ) {
       write_zarr(object = self, path, compression = compression, mode = mode)
     }

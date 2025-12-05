@@ -16,7 +16,7 @@ returns TRUE if zarr store is not empty
 create zarr store
 }
 \examples{
-store <- tempfile(fileext = ".zarr")  
+store <- tempfile(fileext = ".zarr")
 create_zarr(store)
 is_zarr_empty(store)
 }

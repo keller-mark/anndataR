@@ -20,7 +20,7 @@ create_zarr_group(store, name, version = "v2")
 create zarr groups
 }
 \examples{
-store <- tempfile(fileext = ".zarr")  
+store <- tempfile(fileext = ".zarr")
 create_zarr(store)
 create_zarr_group(store, "gp")
 }

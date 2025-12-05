@@ -18,6 +18,6 @@ create_zarr(store, version = "v2")
 create zarr store
 }
 \examples{
-store <- tempfile(fileext = ".zarr")  
+store <- tempfile(fileext = ".zarr")
 create_zarr(store)
 }

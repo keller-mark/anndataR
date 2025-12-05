@@ -32,7 +32,7 @@
 #' td <- tempdir(check = TRUE)
 #' unzip(zarr_dir, exdir = td)
 #' zarr_store <- file.path(td, "example2.zarr")
-#' 
+#'
 #' # Read the Zarr as a SingleCellExperiment object
 #' if (requireNamespace("SingleCellExperiment", quietly = TRUE)) {
 #'   sce <- read_zarr(zarr_store, as = "SingleCellExperiment")
