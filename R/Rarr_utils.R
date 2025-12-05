@@ -5,7 +5,12 @@
 #' @param store the location of (zarr) store
 #' @param name name of the group
 #' @param version zarr version
+#' @examples
+#' store <- tempfile(fileext = ".zarr")  
+#' create_zarr(store)
+#' create_zarr_group(store, "gp")
 #' @export
+#' @return `NULL`
 create_zarr_group <- function(store, name, version = "v2") {
   split.name <- strsplit(name, split = "\\/")[[1]]
   if (length(split.name) > 1) {
@@ -34,11 +39,10 @@ create_zarr_group <- function(store, name, version = "v2") {
 #' @param store the location of zarr store
 #' @param version zarr version
 #' @examples
-#' dir.create(td <- tempfile())
-#' zarr_name <- "test"
-#' create_zarr(dir = td, prefix = "test")
-#' dir.exists(file.path(td, "test.zarr"))
+#' store <- tempfile(fileext = ".zarr")  
+#' create_zarr(store)
 #' @export
+#' @return `NULL`
 create_zarr <- function(store, version = "v2") {
   prefix <- basename(store)
   dir <- gsub(paste0(prefix, "$"), "", store)
@@ -51,11 +55,11 @@ create_zarr <- function(store, version = "v2") {
 #'
 #' @param store the location of zarr store
 #' @examples
-#' dir.create(td <- tempfile())
-#' zarr_name <- "test"
-#' create_zarr(dir = td, prefix = "test")
-#' is_zarr_empty(file.path(td, "test.zarr"))
+#' store <- tempfile(fileext = ".zarr")  
+#' create_zarr(store)
+#' is_zarr_empty(store)
 #' @export
+#' @return returns TRUE if zarr store is not empty
 is_zarr_empty <- function(store) {
   files <- list.files(store, recursive = FALSE, full.names = FALSE)
   all(files %in% c(".zarray", ".zattrs", ".zgroup"))

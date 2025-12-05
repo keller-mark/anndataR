@@ -7,7 +7,7 @@
 as_ZarrAnnData(
   adata,
   file,
-  compression = c("none", "gzip", "lzf"),
+  compression = c("none", "gzip"),
   mode = c("w-", "r", "r+", "a", "w", "x")
 )
 }

@@ -73,6 +73,7 @@ Other AnnData classes:
 \item \href{#method-AbstractAnnData-as_HDF5AnnData}{\code{AbstractAnnData$as_HDF5AnnData()}}
 \item \href{#method-AbstractAnnData-as_ZarrAnnData}{\code{AbstractAnnData$as_ZarrAnnData()}}
 \item \href{#method-AbstractAnnData-write_h5ad}{\code{AbstractAnnData$write_h5ad()}}
+\item \href{#method-AbstractAnnData-write_zarr}{\code{AbstractAnnData$write_zarr()}}
 \item \href{#method-AbstractAnnData-clone}{\code{AbstractAnnData$clone()}}
 }
 }
@@ -363,7 +364,7 @@ See \code{\link[=as_ZarrAnnData]{as_ZarrAnnData()}} for more details on the conv
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{AbstractAnnData$as_ZarrAnnData(
   file,
-  compression = c("none", "gzip", "lzf"),
+  compression = c("none", "gzip"),
   mode = c("w-", "r", "r+", "a", "w", "x")
 )}\if{html}{\out{</div>}}
 }
@@ -406,6 +407,36 @@ See \code{\link[=write_h5ad]{write_h5ad()}} for details
 \item{\code{compression}}{See \code{\link[=write_h5ad]{write_h5ad()}}}
 
 \item{\code{mode}}{See \code{\link[=write_h5ad]{write_h5ad()}}}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+\code{path} invisibly
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-AbstractAnnData-write_zarr"></a>}}
+\if{latex}{\out{\hypertarget{method-AbstractAnnData-write_zarr}{}}}
+\subsection{Method \code{write_zarr()}}{
+Write the \code{AnnData} object to an H5AD file
+
+See \code{\link[=write_zarr]{write_zarr()}} for details
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{AbstractAnnData$write_zarr(
+  path,
+  compression = c("none", "gzip"),
+  mode = c("w-", "r", "r+", "a", "w", "x")
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{path}}{See \code{\link[=write_zarr]{write_zarr()}}}
+
+\item{\code{compression}}{See \code{\link[=write_zarr]{write_zarr()}}}
+
+\item{\code{mode}}{See \code{\link[=write_zarr]{write_zarr()}}}
 }
 \if{html}{\out{</div>}}
 }

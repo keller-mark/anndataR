@@ -9,12 +9,14 @@ is_zarr_empty(store)
 \arguments{
 \item{store}{the location of zarr store}
 }
+\value{
+returns TRUE if zarr store is not empty
+}
 \description{
 create zarr store
 }
 \examples{
-dir.create(td <- tempfile())
-zarr_name <- "test"
-create_zarr(dir = td, prefix = "test")
-is_zarr_empty(file.path(td, "test.zarr"))
+store <- tempfile(fileext = ".zarr")  
+create_zarr(store)
+is_zarr_empty(store)
 }

@@ -13,6 +13,14 @@ create_zarr_group(store, name, version = "v2")
 
 \item{version}{zarr version}
 }
+\value{
+\code{NULL}
+}
 \description{
 create zarr groups
+}
+\examples{
+store <- tempfile(fileext = ".zarr")  
+create_zarr(store)
+create_zarr_group(store, "gp")
 }

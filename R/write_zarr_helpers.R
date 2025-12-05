@@ -6,7 +6,7 @@
 #' @param store A Zarr store instance
 #' @param name Name of the element within the Zarr store
 #' @param compression The compression to use when writing the element. Can be
-#' one of `"none"`, `"gzip"` or `"lzf"`. Defaults to `"none"`.
+#' one of `"none"` or `"gzip"`. Defaults to `"none"`.
 #' #' @param stop_on_error Whether to stop on error or generate a warning instead
 #' @param ... Additional arguments passed to writing functions
 #'
@@ -20,7 +20,7 @@ write_zarr_element <- function(
   value,
   store,
   name,
-  compression = c("none", "gzip", "lzf"),
+  compression = c("none", "gzip"),
   stop_on_error = FALSE,
   ...
 ) {
@@ -483,7 +483,7 @@ write_zarr_data_frame <- function(value, store, name, compression, index = NULL,
 #' @param obs Data frame with observations
 #' @param var Data frame with variables
 #' @param compression The compression to use when writing the element. Can be
-#' one of `"none"`, `"gzip"` or `"lzf"`. Defaults to `"none"`.
+#' one of `"none"` or `"gzip"`. Defaults to `"none"`.
 #' @param version The anndata on-disk format version to write
 write_empty_zarr <- function(store, obs, var, compression, version = "0.1.0") {
   create_zarr(store = store)
@@ -550,13 +550,13 @@ zarr_path_exists <- function(store, target_path) {
 #' @param value Value to write. Must be a vector to the same length as the data
 #' frame.
 #' @param compression The compression to use when writing the element. Can be
-#' one of `"none"`, `"gzip"` or `"lzf"`. Defaults to `"none"`.
+#' one of `"none"` or `"gzip"`. Defaults to `"none"`.
 #'
 #' @return Whether the `path` exists in `file`
 zarr_write_compressed <- function(store,
                                   name,
                                   value,
-                                  compression = c("none", "gzip", "lzf"),
+                                  compression = c("none", "gzip"),
                                   chunks = TRUE,
                                   overwrite = FALSE) {
   compression <- match.arg(compression)

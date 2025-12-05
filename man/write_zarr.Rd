@@ -7,7 +7,7 @@
 write_zarr(
   object,
   path,
-  compression = c("none", "gzip", "lzf"),
+  compression = c("none", "gzip"),
   mode = c("w-", "r", "r+", "a", "w", "x"),
   ...
 )
@@ -20,7 +20,7 @@ write_zarr(
 \item{path}{Path of the file to write to}
 
 \item{compression}{The compression algorithm to use when writing the Zarr
-file. Can be one of \code{"none"}, \code{"gzip"} or \code{"lzf"}. Defaults to \code{"none"}.}
+file. Can be one of \code{"none"} or \code{"gzip"}. Defaults to \code{"none"}.}
 
 \item{mode}{The mode to open the Zarr file.
 \itemize{

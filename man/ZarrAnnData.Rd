@@ -85,6 +85,7 @@ Other AnnData classes:
 <li><span class="pkg-link" data-pkg="anndataR" data-topic="AbstractAnnData" data-id="varm_keys"><a href='../../anndataR/html/AbstractAnnData.html#method-AbstractAnnData-varm_keys'><code>anndataR::AbstractAnnData$varm_keys()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="anndataR" data-topic="AbstractAnnData" data-id="varp_keys"><a href='../../anndataR/html/AbstractAnnData.html#method-AbstractAnnData-varp_keys'><code>anndataR::AbstractAnnData$varp_keys()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="anndataR" data-topic="AbstractAnnData" data-id="write_h5ad"><a href='../../anndataR/html/AbstractAnnData.html#method-AbstractAnnData-write_h5ad'><code>anndataR::AbstractAnnData$write_h5ad()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="anndataR" data-topic="AbstractAnnData" data-id="write_zarr"><a href='../../anndataR/html/AbstractAnnData.html#method-AbstractAnnData-write_zarr'><code>anndataR::AbstractAnnData$write_zarr()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -110,7 +111,7 @@ Close the Zarr file when the object is garbage collected
   uns = NULL,
   shape = NULL,
   mode = c("a", "r", "r+", "w", "w-", "x"),
-  compression = c("none", "gzip", "lzf")
+  compression = c("none", "gzip")
 )}\if{html}{\out{</div>}}
 }
 

@@ -11,12 +11,13 @@ create_zarr(store, version = "v2")
 
 \item{version}{zarr version}
 }
+\value{
+\code{NULL}
+}
 \description{
 create zarr store
 }
 \examples{
-dir.create(td <- tempfile())
-zarr_name <- "test"
-create_zarr(dir = td, prefix = "test")
-dir.exists(file.path(td, "test.zarr"))
+store <- tempfile(fileext = ".zarr")  
+create_zarr(store)
 }

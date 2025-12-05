@@ -44,7 +44,10 @@ The object specified by \code{as}
 Read data from a Zarr store
 }
 \examples{
-zarr_store <- system.file("extdata", "example.zarr", package = "anndataR")
+zarr_dir <- system.file("extdata", "example2.zarr.zip", package = "anndataR")
+td <- tempdir(check = TRUE)
+unzip(zarr_dir, exdir = td)
+zarr_store <- file.path(td, "example2.zarr")
 
 # Read the Zarr as a SingleCellExperiment object
 if (requireNamespace("SingleCellExperiment", quietly = TRUE)) {

@@ -7,7 +7,7 @@
 #'   [`SeuratObject::Seurat`] object
 #' @param path Path of the file to write to
 #' @param compression The compression algorithm to use when writing the Zarr
-#'   file. Can be one of `"none"`, `"gzip"` or `"lzf"`. Defaults to `"none"`.
+#'   file. Can be one of `"none"` or `"gzip"`. Defaults to `"none"`.
 #' @param mode The mode to open the Zarr file.
 #'
 #'   * `a` creates a new file or opens an existing one for read/write
@@ -93,7 +93,7 @@
 write_zarr <- function(
   object,
   path,
-  compression = c("none", "gzip", "lzf"),
+  compression = c("none", "gzip"),
   mode = c("w-", "r", "r+", "a", "w", "x"),
   ...
 ) {
