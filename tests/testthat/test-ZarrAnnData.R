@@ -46,7 +46,7 @@ test_that("reading varm works", {
   )
 })
 
-# trackstatus: class=HDF5AnnData, feature=test_get_obsp, status=done
+# trackstatus: class=ZarrAnnData, feature=test_get_obsp, status=done
 test_that("reading obsp works", {
   obsp <- adata$obsp
   expect_true(is.list(obsp), "list")
@@ -200,7 +200,7 @@ test_that("writing var names works", {
   unlink(store, recursive = TRUE)
 })
 
-# trackstatus: class=HDF5AnnData, feature=test_set_obsm, status=done
+# trackstatus: class=ZarrAnnData, feature=test_set_obsm, status=done
 test_that("writing obsm works", {
   store <- tempfile(fileext = ".zarr")
   create_zarr(store = store)
@@ -215,7 +215,7 @@ test_that("writing obsm works", {
   expect_identical(zarr$obsm$X, expected_obsm_x)
 })
 
-# trackstatus: class=HDF5AnnData, feature=test_set_varm, status=done
+# trackstatus: class=ZarrAnnData, feature=test_set_varm, status=done
 test_that("writing varm works", {
   store <- tempfile(fileext = ".zarr")
   create_zarr(store = store)
@@ -231,7 +231,7 @@ test_that("writing varm works", {
   expect_identical(zarr$varm$PCs, expected_varm_x)
 })
 
-# trackstatus: class=HDF5AnnData, feature=test_set_obsp, status=done
+# trackstatus: class=ZarrAnnData, feature=test_set_obsp, status=done
 test_that("writing obsp works", {
   store <- tempfile(fileext = ".zarr")
   create_zarr(store = store)
@@ -247,7 +247,7 @@ test_that("writing obsp works", {
   expect_identical(zarr$obsp$connectivities, expected_obsp_x)
 })
 
-# trackstatus: class=HDF5AnnData, feature=test_set_varp, status=done
+# trackstatus: class=ZarrAnnData, feature=test_set_varp, status=done
 test_that("writing varp works", {
   store <- tempfile(fileext = ".zarr")
   create_zarr(store = store)
@@ -262,7 +262,7 @@ test_that("writing varp works", {
   expect_identical(zarr$varp$connectivities, expected_varp_x)
 })
 
-# trackstatus: class=HDF5AnnData, feature=test_set_uns, status=done
+# trackstatus: class=ZarrAnnData, feature=test_set_uns, status=done
 test_that("writing uns works", {
   store <- tempfile(fileext = ".zarr")
   create_zarr(store = store)

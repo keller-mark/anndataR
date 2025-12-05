@@ -67,7 +67,7 @@ status_lines_proc <- status_lines |>
 
 # combine with missing fields
 status_lines_required <- crossing(
-  class = c("InMemoryAnnData", "HDF5AnnData", "Seurat", "SingleCellExperiment"),
+  class = c("InMemoryAnnData", "HDF5AnnData", "ZarrAnnData", "Seurat", "SingleCellExperiment"),
   prefix = c("get_", "test_get_", "set_", "test_set_"),
   slot = c(
     "X",
