@@ -114,9 +114,9 @@ write_zarr <- function(
       ...
     )
   }
-  
+
   rm(adata)
   gc()
-  
+
   invisible(path)
 }

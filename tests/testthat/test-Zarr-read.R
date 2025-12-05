@@ -52,7 +52,7 @@ test_that("reading recarrays works", {
 test_that("reading 1D numeric arrays works", {
   array_1d <- read_zarr_dense_array(store, "obs/Int")
   expect_equal(array_1d, array(0L:49L))
-  
+
   array_1d <- read_zarr_dense_array(store, "obs/Float")
   expect_equal(array_1d, array(rep(42.42, 50)))
 })
@@ -98,7 +98,7 @@ test_that("reading string arrays works", {
   expect_equal(dim(array), c(5, 10))
 })
 
-# TODO: can we get ordering info from attrs ? 
+# TODO: can we get ordering info from attrs ?
 test_that("reading mappings works", {
   mapping <- read_zarr_mapping(store, "uns")
   expect_type(mapping, "list")

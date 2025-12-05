@@ -19,7 +19,7 @@ test_that("Writing Zarr dense arrays works", {
 
 test_that("Writing Zarr dense 3D arrays works", {
   value <- array(rnorm(60), dim = c(5, 4, 3))
-  
+
   expect_silent(
     write_zarr_element(
       value,
@@ -62,7 +62,7 @@ test_that("Writing dgeMatrix", {
     as("dMatrix") |>
     as("generalMatrix") |>
     as("unpackedMatrix")
-  
+
   expect_silent(
     write_zarr_element(value, store, "dgematrix")
   )
@@ -217,7 +217,7 @@ test_that("writing gzip compressed files works for Zarr", {
     obs = dummy$obs,
     var = dummy$var
   )
-  
+
   store_none <- tempfile(fileext = ".zarr")
   store_gzip <- tempfile(fileext = ".zarr")
 
@@ -226,3 +226,5 @@ test_that("writing gzip compressed files works for Zarr", {
 
   expect_true(dir_size(store_none) > dir_size(store_gzip))
 })
+
+# TODO: add other zipping schemes ?

@@ -108,7 +108,6 @@ test_that("reading var names works", {
 # SETTERS ----------------------------------------------------------------
 test_that("creating empty Zarr works", {
   empty_store <- tempfile(fileext = ".zarr")
-  # create_zarr(store = empty_store)
   expect_silent(ZarrAnnData$new(empty_store))
   unlink(empty_store, recursive = TRUE)
 })

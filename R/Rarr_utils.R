@@ -19,7 +19,7 @@ create_zarr_group <- function(store, name, version = "v2") {
   dir.create(file.path(store, split.name[1]), showWarnings = FALSE)
   switch(version,
     v2 = {
-      write("{\"zarr_format\":2}", file = file.path(store, split.name[1], ".zgroup"))},
+          write("{\"zarr_format\":2}", file = file.path(store, split.name[1], ".zgroup"))},
     v3 = {
       stop("Currently only zarr v2 is supported!")
     },

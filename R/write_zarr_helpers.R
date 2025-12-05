@@ -17,13 +17,13 @@
 #' writing functions as it contains additional boilerplate to make sure
 #' elements are written correctly.
 write_zarr_element <- function(
-  value, 
-  store, 
-  name, 
-  compression = c("none", "gzip", "lzf"), 
-  stop_on_error = FALSE, 
+  value,
+  store,
+  name,
+  compression = c("none", "gzip", "lzf"),
+  stop_on_error = FALSE,
   ...
-) { 
+) {
   compression <- match.arg(compression)
 
   # Sparse matrices
@@ -253,14 +253,14 @@ write_zarr_string_array <- function(value,
     dims <- length(value)
   }
 
-  # replace NA to "NA" (as in rhdf5:::.h5postProcessDataset) 
+  # replace NA to "NA" (as in rhdf5:::.h5postProcessDataset)
   # to read as "NA" -> NA later after Rarr:read_zarr_array
   value[is.na(value)] <- "NA"
-  
+
   data <- array(data = value, dim = dims)
   Rarr::write_zarr_array(data,
                          zarr_array_path = file.path(store, name),
-                         chunk_dim = dims, 
+                         chunk_dim = dims,
                          compressor = .get_compressor(compression))
 
   write_zarr_encoding(store, name, "string-array", version)
@@ -285,15 +285,15 @@ write_zarr_categorical <- function(value,
                                    version = "0.2.0",
                                    overwrite = FALSE) {
   create_zarr_group(store, name)
-  
+
   categories <- levels(value)
-  
+
   # Use zero-indexed values
   codes <- as.integer(value) - 1L
-  
+
   # Set missing values to -1
   codes[is.na(codes)] <- -1L
-  
+
   # write values to file
   write_zarr_string_array(
     categories,
@@ -302,7 +302,7 @@ write_zarr_categorical <- function(value,
     compression
   )
   write_zarr_dense_array(codes, store, paste0(name, "/codes"), compression)
-  
+
   # Write encoding
   write_zarr_encoding(
     store = store,
@@ -310,7 +310,7 @@ write_zarr_categorical <- function(value,
     encoding = "categorical",
     version = version
   )
-  
+
   # Write ordered attribute
   Rarr::write_zarr_attributes(file.path(store, name),
                               new.zattrs = list("ordered" = is.ordered(value)))
@@ -339,7 +339,7 @@ write_zarr_string_scalar <- function(value,
   value <- array(data = value, dim = 1)
   Rarr::write_zarr_array(value,
                          zarr_array_path = file.path(store, name),
-                         chunk_dim = 1, 
+                         chunk_dim = 1,
                          compressor = .get_compressor(compression))
 
   # Write attributes
@@ -413,7 +413,7 @@ write_zarr_data_frame <- function(value, store, name, compression, index = NULL,
                                   version = "0.2.0", overwrite = FALSE) {
   create_zarr_group(store, name)
   write_zarr_encoding(store, name, "dataframe", version)
-  
+
   if (is.null(index)) {
     index_name <- "_index"
     index_value <- rownames(value)
@@ -433,31 +433,31 @@ write_zarr_data_frame <- function(value, store, name, compression, index = NULL,
   if (is.null(index_value)) {
     index_value <- seq_len(nrow(value)) - 1L
   }
-  
+
   # Write data frame columns
   for (col in colnames(value)) {
     write_zarr_element(
-      value[[col]], 
-      store, 
-      paste0(name, "/", col), 
+      value[[col]],
+      store,
+      paste0(name, "/", col),
       compression
     )
   }
-  
+
   # Write index
   write_zarr_element(
-    index_value, 
-    store, 
-    paste0(name, "/", index_name), 
+    index_value,
+    store,
+    paste0(name, "/", index_name),
     compression
   )
-  
+
   # Write additional data frame attributes
   Rarr::write_zarr_attributes(
-    zarr_path = file.path(store, name), 
+    zarr_path = file.path(store, name),
     new.zattrs = list("_index" = index_name)
   )
-  
+
   # Write additional data frame attributes
   col_order <- colnames(value)
   col_order <- col_order[col_order != index_name]
@@ -466,10 +466,11 @@ write_zarr_data_frame <- function(value, store, name, compression, index = NULL,
   if (length(col_order) == 0) {
     col_order <- numeric()
   }
-  
+
   Rarr::write_zarr_attributes(
-    zarr_path = file.path(store, name), 
-    new.zattrs = list(`column-order` = col_order))
+    zarr_path = file.path(store, name),
+    new.zattrs = list(`column-order` = col_order)
+  )
 }
 
 #' Write empty Zarr
@@ -568,12 +569,12 @@ zarr_write_compressed <- function(store,
   data <- array(data = value, dim = dims)
   Rarr::write_zarr_array(data,
                          zarr_array_path = file.path(store, name),
-                         chunk_dim = dims, 
+                         chunk_dim = dims,
                          compressor = .get_compressor(compression))
 }
 
 .get_compressor <- function(x) {
-  switch(x, 
+  switch(x,
          "none" = NULL,
          "gzip" = Rarr::use_gzip())
 }

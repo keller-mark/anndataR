@@ -119,7 +119,7 @@ read_zarr_dense_array <- function(store, name, version = "0.2.0") {
 
   # Extract the NestedArray contents as a base R array.
   data <- read_zarr_array(store, name)
-  
+
   # If the array is 1D, explicitly add a dimension
   if (is.null(dim(data))) {
     data <- as.vector(data)
@@ -132,7 +132,7 @@ read_zarr_dense_array <- function(store, name, version = "0.2.0") {
     data <- as.logical(data)
     dim(data) <- dims
   }
-  
+
   data
 }
 
@@ -234,7 +234,8 @@ read_zarr_rec_array <- function(store, name, version = "0.2.0") {
     lapply(field_names, function(x) {
       as.vector(Rarr::read_zarr_array(file.path(store, name, x)))
     }),
-    field_names)
+    field_names
+  )
 }
 
 #' Read Zarr nullable boolean
@@ -304,17 +305,16 @@ read_zarr_nullable <- function(store, name, version = "0.1.0") {
 #' @noRd
 read_zarr_string_array <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
-  # reads in transposed
   data <- read_zarr_array(store, name)
-  
+
   if (is.null(dim(data)) || length(dim(data)) == 1) {
     data <- as.vector(data)
     dim(data) <- length(data)
   }
-  
-  # convert "NA" to NA (as in rhdf5:::.h5postProcessDataset) 
+
+  # convert "NA" to NA (as in rhdf5:::.h5postProcessDataset)
   data[data == "NA"] <- NA
-  
+
   data
 }
 
@@ -507,6 +507,5 @@ read_zarr_collection <- function(store, name, item_names) {
     }
   )
   names(items) <- item_names
-  
   items
 }
