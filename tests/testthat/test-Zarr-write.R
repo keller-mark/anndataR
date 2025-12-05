@@ -1,6 +1,10 @@
 skip_if_not_installed("Rarr")
 
 store <- tempfile(fileext = ".zarr")
+if(dir.exists(store)){
+  unlink(store, recursive = TRUE)
+}
+
 create_zarr(store = store)
 
 test_that("Writing Zarr dense arrays works", {
@@ -115,7 +119,6 @@ test_that("Writing Zarr categoricals works", {
   expect_true(zarr_path_exists(store, "categorical"))
   expect_true(zarr_path_exists(store, "categorical/categories"))
   expect_true(zarr_path_exists(store, "categorical/codes"))
-  expect_true(zarr_path_exists(store, "categorical/ordered"))
   attrs <- Rarr::read_zarr_attributes(file.path(store, "categorical"))
   expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
   expect_equal(attrs[["encoding-type"]], "categorical")

@@ -320,6 +320,9 @@ read_zarr_string_array <- function(store, name, version = "0.2.0") {
     dim(data) <- length(data)
   }
   
+  # convert "NA" to NA (as in rhdf5:::.h5postProcessDataset) 
+  data[data == "NA"] <- NA
+  
   # TODO: as opposed to HDF5, this is not needed in Zarr
   # transpose the matrix if need be
   # if (is.matrix(data)) {

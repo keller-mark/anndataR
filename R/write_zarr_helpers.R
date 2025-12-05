@@ -253,7 +253,14 @@ write_zarr_string_array <- function(value,
     dims <- length(value)
   }
 
+  # convert to array 
+  # data <- array(data = value, dim = dims)
+  
+  # replace NA to "NA" (as in rhdf5:::.h5postProcessDataset) 
+  # to read as "NA" -> NA later after Rarr:read_zarr_array
+  value[is.na(value)] <- "NA"
   data <- array(data = value, dim = dims)
+  
   Rarr::write_zarr_array(data,
                          zarr_array_path = file.path(store, name),
                          chunk_dim = dims)
@@ -280,11 +287,39 @@ write_zarr_categorical <- function(value,
                                    version = "0.2.0",
                                    overwrite = FALSE) {
   create_zarr_group(store, name)
-  zarr_write_compressed(store, paste0(name, "/categories"), levels(value), compression, overwrite = overwrite)
-  zarr_write_compressed(store, paste0(name, "/codes"), as.integer(value), compression, overwrite = overwrite)
-  zarr_write_compressed(store, paste0(name, "/ordered"), is.ordered(value), compression, overwrite = overwrite)
+  # zarr_write_compressed(store, paste0(name, "/categories"), levels(value), compression, overwrite = overwrite)
+  # zarr_write_compressed(store, paste0(name, "/codes"), as.integer(value), compression, overwrite = overwrite)
+  # zarr_write_compressed(store, paste0(name, "/ordered"), is.ordered(value), compression, overwrite = overwrite)
+  
+  categories <- levels(value)
+  
+  # Use zero-indexed values
+  codes <- as.integer(value) - 1L
+  
+  # Set missing values to -1
+  codes[is.na(codes)] <- -1L
+  
+  # write values to file
+  write_zarr_string_array(
+    categories,
+    store,
+    paste0(name, "/categories"),
+    compression
+  )
+  write_zarr_dense_array(codes, store, paste0(name, "/codes"), compression)
+  
+  # Write encoding
+  write_zarr_encoding(
+    store = store,
+    name = name,
+    encoding = "categorical",
+    version = version
+  )
+  
+  # Write ordered attribute
+  Rarr::write_zarr_attributes(file.path(store,name), 
+                              new.zattrs = list("ordered" = is.ordered(value)))
 
-  write_zarr_encoding(store, name, "categorical", version)
 }
 
 #' Write Zarr string scalar
