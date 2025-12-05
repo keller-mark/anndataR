@@ -253,7 +253,6 @@ write_zarr_string_array <- function(value,
     dims <- length(value)
   }
 
-
   # replace NA to "NA" (as in rhdf5:::.h5postProcessDataset) 
   # to read as "NA" -> NA later after Rarr:read_zarr_array
   value[is.na(value)] <- "NA"
@@ -261,7 +260,8 @@ write_zarr_string_array <- function(value,
   data <- array(data = value, dim = dims)
   Rarr::write_zarr_array(data,
                          zarr_array_path = file.path(store, name),
-                         chunk_dim = dims)
+                         chunk_dim = dims, 
+                         compressor = .get_compressor(compression))
 
   write_zarr_encoding(store, name, "string-array", version)
 }
@@ -339,7 +339,8 @@ write_zarr_string_scalar <- function(value,
   value <- array(data = value, dim = 1)
   Rarr::write_zarr_array(value,
                          zarr_array_path = file.path(store, name),
-                         chunk_dim = 1)
+                         chunk_dim = 1, 
+                         compressor = .get_compressor(compression))
 
   # Write attributes
   write_zarr_encoding(store, name, "string", version)
@@ -567,5 +568,12 @@ zarr_write_compressed <- function(store,
   data <- array(data = value, dim = dims)
   Rarr::write_zarr_array(data,
                          zarr_array_path = file.path(store, name),
-                         chunk_dim = dims)
+                         chunk_dim = dims, 
+                         compressor = .get_compressor(compression))
+}
+
+.get_compressor <- function(x) {
+  switch(x, 
+         "none" = NULL,
+         "gzip" = Rarr::use_gzip())
 }

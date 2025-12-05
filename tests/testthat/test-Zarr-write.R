@@ -203,8 +203,12 @@ test_that("writing Zarr from Seurat works", {
   expect_true(dir.exists(store))
 })
 
+dir_size <- function(path) {
+  files <- list.files(path, recursive = TRUE, full.names = TRUE)
+  sum(file.info(files)$size, na.rm = TRUE)
+}
+
 test_that("writing gzip compressed files works for Zarr", {
-  skip("gzip zipping doesnt works ? ")
   dummy <- generate_dataset(100, 200)
   non_random_X <- matrix(5, 100, 200) # nolint
 
@@ -220,27 +224,5 @@ test_that("writing gzip compressed files works for Zarr", {
   write_zarr(adata, store_none, compression = "none")
   write_zarr(adata, store_gzip, compression = "gzip")
 
-  # TODO: how to check dir size
-  # expect_true(file.info(store_none)$size > file.info(store_gzip)$size)
-})
-
-test_that("writing lzf compressed files works for Zarr", {
-  skip("lzf zipping doesnt works ? ")
-  dummy <- generate_dataset(100, 200)
-  non_random_X <- matrix(5, 100, 200) # nolint
-
-  adata <- AnnData(
-    X = non_random_X,
-    obs = dummy$obs,
-    var = dummy$var
-  )
-
-  store_none <- tempfile(fileext = ".zarr")
-  store_lzf <- tempfile(fileext = ".zarr")
-
-  write_zarr(adata, store_none, compression = "none")
-  write_zarr(adata, store_lzf, compression = "lzf")
-
-  # TODO: how to check dir size
-  # expect_true(file.info(store_none)$size > file.info(store_lzf)$size)
+  expect_true(dir_size(store_none) > dir_size(store_gzip))
 })
