@@ -24,7 +24,7 @@ ZarrAnnData <- R6::R6Class(
     .compression = NULL,
     
     .check_file_valid = function() {
-      if (!zarr_path_exists(private$.zarrobj)) {
+      if (!zarr_path_exists(private$.zarrobj, "/")) {
         cli_abort(
           paste(
             "The Zarr file does not exist, or not a zarr file/store!"
@@ -374,10 +374,10 @@ ZarrAnnData <- R6::R6Class(
       }
       
       # File is supposed to exist by now. Check if it is a valid Zarr file
-      attrs <- Rarr::read_zarr_attributes(store)
+      attrs <- Rarr::read_zarr_attributes(file)
       if (!all(c("encoding-type", "encoding-version") %in% names(attrs))) {
         cli_abort(c(
-          "File {.file {store}} is not a valid Zarr file."
+          "File {.file {file}} is not a valid Zarr file."
         ))
       }
       
@@ -413,7 +413,7 @@ ZarrAnnData <- R6::R6Class(
     },
     
     # We don't close 
-    #' @description Close the Zarr store
+    #' @description Close the Zarr store/file
     close = function() {
     },
     

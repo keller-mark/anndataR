@@ -10,7 +10,7 @@ create_zarr_group <- function(store, name, version = "v2") {
   split.name <- strsplit(name, split = "\\/")[[1]]
   if (length(split.name) > 1) {
     split.name <- vapply(seq_along(split.name),
-                         function(x) paste(split.name[seq_along(x)], collapse = "/"),
+                         function(x) paste(split.name[seq_len(x)], collapse = "/"),
                          FUN.VALUE = character(1))
     split.name <- rev(tail(split.name, 2))
     if (!dir.exists(file.path(store, split.name[2])))

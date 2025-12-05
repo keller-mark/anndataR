@@ -412,7 +412,7 @@ write_zarr_data_frame <- function(value, store, name, compression, index = NULL,
                                   version = "0.2.0", overwrite = FALSE) {
   create_zarr_group(store, name)
   write_zarr_encoding(store, name, "dataframe", version)
-
+  
   if (is.null(index)) {
     index_name <- "_index"
     index_value <- rownames(value)
@@ -429,15 +429,34 @@ write_zarr_data_frame <- function(value, store, name, compression, index = NULL,
       "string giving the name of a column in `value`"
     )
   }
-
-  # Write index
-  write_zarr_data_frame_index(index_value, store, name, compression, index_name, overwrite = overwrite)
-
+  if (is.null(index_value)) {
+    index_value <- seq_len(nrow(value)) - 1L
+  }
+  
   # Write data frame columns
   for (col in colnames(value)) {
-    write_zarr_element(value[[col]], store, paste0(name, "/", col), compression, overwrite = overwrite)
+    write_zarr_element(
+      value[[col]], 
+      store, 
+      paste0(name, "/", col), 
+      compression
+    )
   }
-
+  
+  # Write index
+  write_zarr_element(
+    index_value, 
+    store, 
+    paste0(name, "/", index_name), 
+    compression
+  )
+  
+  # Write additional data frame attributes
+  Rarr::write_zarr_attributes(
+    zarr_path = file.path(store, name), 
+    new.zattrs = list("_index" = index_name)
+  )
+  
   # Write additional data frame attributes
   col_order <- colnames(value)
   col_order <- col_order[col_order != index_name]
@@ -446,40 +465,10 @@ write_zarr_data_frame <- function(value, store, name, compression, index = NULL,
   if (length(col_order) == 0) {
     col_order <- numeric()
   }
-
-  Rarr::write_zarr_attributes(file.path(store, name), list(`column-order` = col_order))
-}
-
-#' Write Zarr data frame index
-#'
-#' Write an for a data frame to a Zarr store
-#'
-#' @noRd
-#'
-#' @param value Value to write. Must be a vector to the same length as the data
-#' frame.
-#' @param store A Zarr store instance
-#' @param name Name of the element within the Zarr store containing the data
-#' frame
-#' @param compression The compression to use when writing the element. Can be
-#' one of `"none"`, `"gzip"` or `"lzf"`. Defaults to `"none"`.
-#' @param index_name Name of the data frame column storing the index
-write_zarr_data_frame_index <- function(value, store, name, compression, index_name, overwrite = FALSE) {
-  if (!zarr_path_exists(store, name)) {
-    create_zarr_group(store, name)
-    write_zarr_encoding(store, name, "dataframe", "0.2.0")
-  }
-
-  encoding <- read_zarr_encoding(store, name)
-  if (encoding$type != "dataframe") {
-    stop("'", name, "' in '", store, "' is not a data frame")
-  }
-
-  # Write index columns
-  write_zarr_element(value, store, paste0(name, "/", index_name), overwrite = overwrite)
-
-  # Write data frame index attribute
-  Rarr::write_zarr_attributes(file.path(store, name), list(`_index` = index_name))
+  
+  Rarr::write_zarr_attributes(
+    zarr_path = file.path(store, name), 
+    new.zattrs = list(`column-order` = col_order))
 }
 
 #' Write empty Zarr
