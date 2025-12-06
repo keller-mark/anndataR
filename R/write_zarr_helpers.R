@@ -140,18 +140,21 @@ write_zarr_dense_array <- function(
   name,
   compression,
   version = "0.2.0",
-  chunks = TRUE,
-  overwrite = FALSE
+  chunks = TRUE
 ) {
   version <- match.arg(version)
+
+  # matrices of type 'dgeMatrix' can simply be converted to a matrix
+  if (inherits(value, "denseMatrix")) {
+    value <- as.matrix(value)
+  }
 
   zarr_write_compressed(
     store,
     name,
     value,
     compression,
-    chunks = chunks,
-    overwrite = overwrite
+    chunks = chunks
   )
 
   # Write attributes
@@ -175,8 +178,7 @@ write_zarr_sparse_array <- function(
   store,
   name,
   compression,
-  version = "0.1.0",
-  overwrite = FALSE
+  version = "0.1.0"
 ) {
   version <- match.arg(version)
 
@@ -205,22 +207,19 @@ write_zarr_sparse_array <- function(
     store,
     paste0(name, "/indices"),
     attr(value, indices_attr),
-    compression,
-    overwrite = overwrite
+    compression
   )
   zarr_write_compressed(
     store,
     paste0(name, "/indptr"),
     value@p,
-    compression,
-    overwrite = overwrite
+    compression
   )
   zarr_write_compressed(
     store,
     paste0(name, "/data"),
     value@x,
-    compression,
-    overwrite = overwrite
+    compression
   )
 
   # Add encoding
@@ -247,8 +246,7 @@ write_zarr_nullable_boolean <- function(
   store,
   name,
   compression,
-  version = "0.1.0",
-  overwrite = FALSE
+  version = "0.1.0"
 ) {
   # write mask and values
   create_zarr_group(store, name)
@@ -259,15 +257,13 @@ write_zarr_nullable_boolean <- function(
     store,
     paste0(name, "/values"),
     value_no_na,
-    compression,
-    overwrite = overwrite
+    compression
   )
   zarr_write_compressed(
     store,
     paste0(name, "/mask"),
     is.na(value),
-    compression,
-    overwrite = overwrite
+    compression
   )
 
   # Write attributes
@@ -291,8 +287,7 @@ write_zarr_nullable_integer <- function(
   store,
   name,
   compression,
-  version = "0.1.0",
-  overwrite = FALSE
+  version = "0.1.0"
 ) {
   # write mask and values
   create_zarr_group(store, name)
@@ -303,15 +298,13 @@ write_zarr_nullable_integer <- function(
     store,
     paste0(name, "/values"),
     value_no_na,
-    compression,
-    overwrite = overwrite
+    compression
   )
   zarr_write_compressed(
     store,
     paste0(name, "/mask"),
     is.na(value),
-    compression,
-    overwrite = overwrite
+    compression
   )
 
   # Write attributes
@@ -335,8 +328,7 @@ write_zarr_string_array <- function(
   store,
   name,
   compression,
-  version = "0.2.0",
-  overwrite = FALSE
+  version = "0.2.0"
 ) {
   if (!is.null(dim(value))) {
     dims <- dim(value)
@@ -376,8 +368,7 @@ write_zarr_categorical <- function(
   store,
   name,
   compression,
-  version = "0.2.0",
-  overwrite = FALSE
+  version = "0.2.0"
 ) {
   create_zarr_group(store, name)
 
@@ -430,8 +421,7 @@ write_zarr_string_scalar <- function(
   store,
   name,
   compression,
-  version = "0.2.0",
-  overwrite = FALSE
+  version = "0.2.0"
 ) {
   # Write scalar
   value <- array(data = value, dim = 1)
@@ -463,11 +453,10 @@ write_zarr_numeric_scalar <- function(
   store,
   name,
   compression,
-  version = "0.2.0",
-  overwrite = FALSE
+  version = "0.2.0"
 ) {
   # Write scalar
-  zarr_write_compressed(store, name, value, compression, overwrite = overwrite)
+  zarr_write_compressed(store, name, value, compression)
 
   # Write attributes
   write_zarr_encoding(store, name, "numeric-scalar", version)
@@ -490,8 +479,7 @@ write_zarr_mapping <- function(
   store,
   name,
   compression,
-  version = "0.1.0",
-  overwrite = FALSE
+  version = "0.1.0"
 ) {
   create_zarr_group(store, name)
 
@@ -501,8 +489,7 @@ write_zarr_mapping <- function(
       value[[key]],
       store,
       paste0(name, "/", key),
-      compression,
-      overwrite = overwrite
+      compression
     )
   }
 
@@ -530,8 +517,7 @@ write_zarr_data_frame <- function(
   name,
   compression,
   index = NULL,
-  version = "0.2.0",
-  overwrite = FALSE
+  version = "0.2.0"
 ) {
   create_zarr_group(store, name)
   write_zarr_encoding(store, name, "dataframe", version)
@@ -607,7 +593,13 @@ write_zarr_data_frame <- function(
 #' @param compression The compression to use when writing the element. Can be
 #' one of `"none"` or `"gzip"`. Defaults to `"none"`.
 #' @param version The anndata on-disk format version to write
-write_empty_zarr <- function(store, obs, var, compression, version = "0.1.0") {
+write_empty_zarr <- function(
+  store,
+  obs,
+  var,
+  compression,
+  version = "0.1.0"
+) {
   create_zarr(store = store)
   write_zarr_encoding(store, "/", "anndata", "0.1.0")
 
@@ -682,8 +674,7 @@ zarr_write_compressed <- function(
   name,
   value,
   compression = c("none", "gzip"),
-  chunks = TRUE,
-  overwrite = FALSE
+  chunks = TRUE
 ) {
   compression <- match.arg(compression)
   if (!is.null(dim(value))) {

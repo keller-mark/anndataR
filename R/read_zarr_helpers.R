@@ -478,49 +478,19 @@ read_zarr_data_frame <- function(
 ) {
   version <- match.arg(version)
 
-  attributes <- Rarr::read_zarr_attributes(file.path(store, name))
-  index_name <- attributes$`_index`
-  column_order <- attributes$`column-order`
+  attrs <- Rarr::read_zarr_attributes(file.path(store, name))
+  index_name <- attrs[["_index"]]
+  column_order <- attrs[["column-order"]]
 
-  columns <- read_zarr_collection(store, name, column_order)
+  index <- read_zarr_element(store, file.path(name, index_name))
+  data <- read_zarr_collection(store, name, column_order)
 
-  if (length(columns) == 0) {
-    index <- read_zarr_data_frame_index(store, name)
-    df <- data.frame(row.names = seq_along(index))
-  } else {
-    df <- data.frame(columns)
-  }
-
-  if (isTRUE(include_index)) {
-    index <- read_zarr_data_frame_index(store, name)
-
-    # The default index name is not allowed as a column name so adjust it
-    if (index_name == "_index") {
-      rownames(df) <- index
-    }
-  }
-
-  df
-}
-
-#' Read Zarr data frame index
-#'
-#' Read the index of a data frame from a Zarr store
-#'
-#' @param store A Zarr store instance
-#' @param name Name of the element within the Zarr store
-#' @param version Encoding version of the element to read
-#'
-#' @return an object containing the index
-#'
-#' @noRd
-read_zarr_data_frame_index <- function(store, name, version = "0.2.0") {
-  version <- match.arg(version)
-
-  attributes <- Rarr::read_zarr_attributes(file.path(store, name))
-  index_name <- attributes$`_index`
-
-  read_zarr_element(store, file.path(name, index_name))
+  as.data.frame(
+    row.names = index,
+    data,
+    check.names = FALSE,
+    fix.empty.names = FALSE
+  )
 }
 
 #' Read multiple Zarr datatypes
