@@ -120,8 +120,7 @@ read_zarr_element <- function(
 }
 
 read_zarr_array <- function(store, name) {
-  zarr_arr <- Rarr::read_zarr_array(file.path(store, name))
-  zarr_arr
+  Rarr::read_zarr_array(file.path(store, name))
 }
 
 #' Read Zarr dense array
@@ -418,7 +417,13 @@ read_zarr_string_scalar <- function(store, name, version = "0.2.0") {
 #' @noRd
 read_zarr_numeric_scalar <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
-  as.numeric(read_zarr_array(store, name))
+
+  value <- read_zarr_array(store, name)
+
+  # convert array to vector
+  value <- as.vector(value)
+
+  value
 }
 
 #' Read Zarr mapping
