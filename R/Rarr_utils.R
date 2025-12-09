@@ -13,7 +13,7 @@
 #' @export
 #' @return `NULL`
 create_zarr_group <- function(store, name, version = "v2") {
-  split.name <- strsplit(name, split = "\\/")[[1]]
+  split.name <- strsplit(name, split = "/", fixed = TRUE)[[1]]
   if (length(split.name) > 1) {
     split.name <- vapply(
       seq_along(split.name),

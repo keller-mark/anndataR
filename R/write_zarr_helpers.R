@@ -330,11 +330,7 @@ write_zarr_string_array <- function(
   compression,
   version = "0.2.0"
 ) {
-  if (!is.null(dim(value))) {
-    dims <- dim(value)
-  } else {
-    dims <- length(value)
-  }
+  dims <- dim(value) %||% length(value)
 
   # replace NA to "NA" (as in rhdf5:::.h5postProcessDataset)
   # to read as "NA" -> NA later after Rarr:read_zarr_array
