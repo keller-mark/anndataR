@@ -36,7 +36,7 @@ file. Can be one of \code{"none"} or \code{"gzip"}. Defaults to \code{"none"}.}
 \code{path} invisibly
 }
 \description{
-Write an Zarr file
+Write a Zarr file
 }
 \details{
 \subsection{Compression}{
@@ -67,7 +67,7 @@ adata <- AnnData(
 zarr_store <- tempfile(fileext = ".zarr")
 adata$write_zarr(zarr_store)
 
-# Write a SingleCellExperiment as an Zarr
+# Write a SingleCellExperiment as a Zarr store
 if (requireNamespace("SingleCellExperiment", quietly = TRUE)) {
   ncells <- 100
   counts <- matrix(rpois(20000, 5), ncol = ncells)

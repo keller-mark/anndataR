@@ -31,7 +31,7 @@ test_that("reading sparse matrices is same for h5ad and zarr", {
   expect_equal(mat_h5ad, mat_zarr)
 })
 
-test_that("reading recarrays works", {
+test_that("reading recarrays is the same for h5ad and zarr", {
   skip("read_zarr_rec_array is not implemented yet")
   array_list <- read_zarr_rec_array(
     file,
@@ -110,9 +110,9 @@ test_that("reading mappings is same for h5ad and zarr", {
   expect_equal(mapping_h5ad, mapping_zarr)
 })
 
-test_that("reading dataframes works", {
+test_that("reading dataframes is the same for h5ad and zarr", {
   df_h5ad <- read_h5ad_data_frame(file, "obs")
-  df_zarr <- read_zarr_data_frame(store, "obs", include_index = TRUE)
+  df_zarr <- read_zarr_data_frame(store, "obs")
   expect_equal(df_h5ad, df_zarr)
 })
 
@@ -121,5 +121,13 @@ test_that("reading H5AD as SingleCellExperiment is same for h5ad and zarr", {
   skip_if_not_installed("SingleCellExperiment")
   sce_h5ad <- read_h5ad(file, as = "SingleCellExperiment")
   sce_zarr <- read_zarr(store, as = "SingleCellExperiment")
+  expect_equal(sce_h5ad, sce_zarr)
+})
+
+test_that("reading H5AD as Seurat is same for h5ad and zarr", {
+  skip("for now, example.zarr and example.h5ad are not identical!")
+  skip_if_not_installed("Seurat")
+  sce_h5ad <- read_h5ad(file, as = "Seurat")
+  sce_zarr <- read_zarr(store, as = "Seurat")
   expect_equal(sce_h5ad, sce_zarr)
 })

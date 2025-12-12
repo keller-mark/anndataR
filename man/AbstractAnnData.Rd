@@ -358,7 +358,7 @@ An \code{\link{HDF5AnnData}} object
 \if{html}{\out{<a id="method-AbstractAnnData-as_ZarrAnnData"></a>}}
 \if{latex}{\out{\hypertarget{method-AbstractAnnData-as_ZarrAnnData}{}}}
 \subsection{Method \code{as_ZarrAnnData()}}{
-Convert to an \code{\link{ZarrAnnData}}
+Convert to a \code{\link{ZarrAnnData}}
 
 See \code{\link[=as_ZarrAnnData]{as_ZarrAnnData()}} for more details on the conversion
 \subsection{Usage}{
@@ -381,7 +381,7 @@ See \code{\link[=as_ZarrAnnData]{as_ZarrAnnData()}} for more details on the conv
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-An \code{\link{ZarrAnnData}} object
+A \code{\link{ZarrAnnData}} object
 }
 }
 \if{html}{\out{<hr>}}
@@ -418,7 +418,7 @@ See \code{\link[=write_h5ad]{write_h5ad()}} for details
 \if{html}{\out{<a id="method-AbstractAnnData-write_zarr"></a>}}
 \if{latex}{\out{\hypertarget{method-AbstractAnnData-write_zarr}{}}}
 \subsection{Method \code{write_zarr()}}{
-Write the \code{AnnData} object to an H5AD file
+Write the \code{AnnData} object to a Zarr file
 
 See \code{\link[=write_zarr]{write_zarr()}} for details
 \subsection{Usage}{

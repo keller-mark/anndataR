@@ -106,7 +106,7 @@ test_that("reading mappings works", {
 })
 
 test_that("reading dataframes works", {
-  df <- read_zarr_data_frame(store, "obs", include_index = TRUE)
+  df <- read_zarr_data_frame(store, "obs")
   expect_s3_class(df, "data.frame")
   expect_equal(
     colnames(df),

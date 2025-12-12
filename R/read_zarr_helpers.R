@@ -8,24 +8,20 @@
 #' @return A named list with names type and version
 #'
 #' @noRd
-read_zarr_encoding <- function(store, name, stop_on_error = TRUE) {
-  attrs <- Rarr::read_zarr_attributes(file.path(store, name))
-
-  if (!all(c("encoding-type", "encoding-version") %in% names(attrs))) {
-    if (stop_on_error) {
-      stop(
-        "Encoding attributes not found for element '",
-        name,
-        "' "
+read_zarr_encoding <- function(store, name) {
+  tryCatch(
+    {
+      attrs <- Rarr::read_zarr_attributes(file.path(store, name))
+      list(
+        type = attrs[["encoding-type"]],
+        version = attrs[["encoding-version"]]
       )
-    } else {
-      return(NULL)
+    },
+    error = function(e) {
+      cli_abort(
+        "Encoding attributes not found for element {.val {name}} in {.path {store}}"
+      )
     }
-  }
-
-  list(
-    type = attrs[["encoding-type"]],
-    version = attrs[["encoding-version"]]
   )
 }
 
@@ -55,20 +51,12 @@ read_zarr_element <- function(
   stop_on_error = FALSE,
   ...
 ) {
+  if (!zarr_path_exists(store, name)) {
+    return(NULL)
+  }
+  
   if (is.null(type)) {
-    encoding_list <- read_zarr_encoding(
-      store,
-      name,
-      stop_on_error = stop_on_error
-    )
-    if (is.null(encoding_list)) {
-      if (stop_on_error) {
-        stop("No encoding info found for element '", name, "'")
-      } else {
-        warning("No encoding found for element '", name, "'")
-        return(NULL)
-      }
-    }
+    encoding_list <- read_zarr_encoding(store, name)
     type <- encoding_list$type
     version <- encoding_list$version
   }
@@ -137,21 +125,7 @@ read_zarr_array <- function(store, name) {
 read_zarr_dense_array <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
 
-  # Extract the NestedArray contents as a base R array.
   data <- read_zarr_array(store, name)
-
-  # If the array is 1D, explicitly add a dimension
-  if (is.null(dim(data))) {
-    data <- as.vector(data)
-    dim(data) <- length(data)
-  }
-
-  # Reverse {rhdf5} coercion to factors
-  if (is.factor(data) && all(levels(data) %in% c("TRUE", "FALSE"))) {
-    dims <- dim(data)
-    data <- as.logical(data)
-    dim(data) <- dims
-  }
 
   data
 }
@@ -331,11 +305,6 @@ read_zarr_string_array <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
   data <- read_zarr_array(store, name)
 
-  if (is.null(dim(data)) || length(dim(data)) == 1) {
-    data <- as.vector(data)
-    dim(data) <- length(data)
-  }
-
   # convert "NA" to NA (as in rhdf5:::.h5postProcessDataset)
   data[data == "NA"] <- NA
 
@@ -360,30 +329,15 @@ read_zarr_categorical <- function(store, name, version = "0.2.0") {
   categories <- read_zarr_array(store, paste0(name, "/categories"))
 
   # Get codes and convert to 1-based indexing
-  codes <- codes + 1
-
-  if (!length(dim(codes)) == 1) {
-    stop(
-      "There is currently no support for multidimensional categorical arrays"
-    )
-  }
+  codes <- codes + 1L
 
   # Set missing values
-  codes[codes == 0] <- NA
-
+  codes[codes == 0L] <- NA_integer_
+  
   levels <- categories
 
   attributes <- Rarr::read_zarr_attributes(file.path(store, name))
   ordered <- attributes[["ordered"]]
-  if (is.null(ordered) || is.na(ordered)) {
-    warning(
-      "Unable to determine if categorical '",
-      name,
-      "' is ordered, assuming it isn't"
-    )
-
-    ordered <- FALSE
-  }
 
   factor(codes, labels = levels, ordered = ordered)
 }
@@ -459,13 +413,6 @@ read_zarr_mapping <- function(store, name, version = "0.1.0") {
 #' @param store A Zarr store instance
 #' @param name Name of the element within the Zarr store
 #' @param version Encoding version of the element to read
-#' @param include_index Whether or not to include the index as a column
-#'
-#' @details
-#' If `include_index == TRUE` the index stored in the Zarr store is added as a
-#' column to output `data.frame` using the defined index name as the column
-#' name and this is set as an attribute. If `include_index == FALSE` the index
-#' is not provided in the output. In either case row names are not set.
 #'
 #' @return a data.frame
 #'
@@ -473,7 +420,6 @@ read_zarr_mapping <- function(store, name, version = "0.1.0") {
 read_zarr_data_frame <- function(
   store,
   name,
-  include_index = TRUE,
   version = "0.2.0"
 ) {
   version <- match.arg(version)

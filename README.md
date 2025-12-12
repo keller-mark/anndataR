@@ -55,7 +55,7 @@ the task you want to perform.
 - To convert to/from `Seurat` objects, install [SeuratObject](https://cran.r-project.org/package=SeuratObject):  
   `install.packages("SeuratObject")`
 - To read/write \*.zarr files, you need to install
-  [zarr](https://www.bioconductor.org/packages/release/bioc/html/Rarr.html):  
+  [Rarr](https://www.bioconductor.org/packages/release/bioc/html/Rarr.html):  
   `BiocManager::install("Rarr")`
 
 Alternatively, you can install all suggested dependencies at once:
