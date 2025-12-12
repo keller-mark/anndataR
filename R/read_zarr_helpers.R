@@ -54,7 +54,7 @@ read_zarr_element <- function(
   if (!zarr_path_exists(store, name)) {
     return(NULL)
   }
-  
+
   if (is.null(type)) {
     encoding_list <- read_zarr_encoding(store, name)
     type <- encoding_list$type
@@ -333,7 +333,7 @@ read_zarr_categorical <- function(store, name, version = "0.2.0") {
 
   # Set missing values
   codes[codes == 0L] <- NA_integer_
-  
+
   levels <- categories
 
   attributes <- Rarr::read_zarr_attributes(file.path(store, name))

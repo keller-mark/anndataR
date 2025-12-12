@@ -5,10 +5,10 @@
 #' @param store the location of (zarr) store
 #' @param name name of the group
 #' @param version zarr version
-#' 
+#'
 #' @return `NULL`
 #' @noRd
-#' 
+#'
 #' @examples
 #' store <- tempfile(fileext = ".zarr")
 #' create_zarr(store)
@@ -48,10 +48,10 @@ create_zarr_group <- function(store, name, version = "v2") {
 #'
 #' @param store the location of zarr store
 #' @param version zarr version
-#' 
+#'
 #' @return `NULL`
 #' @noRd
-#' 
+#'
 #' @examples
 #' store <- tempfile(fileext = ".zarr")
 #' create_zarr(store)
@@ -63,13 +63,13 @@ create_zarr <- function(store, version = "v2") {
 
 #' is_zarr_empty
 #'
-#' check if a zarr store is empty or not. 
+#' check if a zarr store is empty or not.
 #'
 #' @param store the location of zarr store
-#' 
+#'
 #' @return returns TRUE if zarr store is not empty
 #' @noRd
-#' 
+#'
 #' @examples
 #' store <- tempfile(fileext = ".zarr")
 #' create_zarr(store)
