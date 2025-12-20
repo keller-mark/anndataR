@@ -126,14 +126,14 @@ write_zarr_encoding <- function(store, name, encoding, version) {
 #'
 #' Write a dense array to a Zarr store
 #'
+#' @noRd
+#' 
 #' @param value Value to write
 #' @param store A Zarr store instance
 #' @param name Name of the element within the Zarr store
 #' @param compression The compression to use when writing the element. Can be
 #' one of `"none"`, `"gzip"` or `"lzf"`. Defaults to `"none"`.
 #' @param version Encoding version of the element to write
-#'
-#' @noRd
 write_zarr_dense_array <- function(
   value,
   store,
@@ -625,12 +625,11 @@ write_empty_zarr <- function(
 #'
 #' Check that a path in Zarr exists
 #'
+#' @return Whether the `target_path` exists in `store`
 #' @noRd
 #'
 #' @param store Path to a Zarr store
 #' @param target_path The path within the store to test for
-#'
-#' @return Whether the `target_path` exists in `store`
 zarr_path_exists <- function(store, target_path) {
   zarr <- file.path(store, target_path)
   if (!dir.exists(zarr)) {
@@ -654,6 +653,7 @@ zarr_path_exists <- function(store, target_path) {
 #'
 #' Write Zarr dataset with chosen compression (can be none)
 #'
+#' @return Whether the `path` exists in `file`
 #' @noRd
 #'
 #' @param store Path to a Zarr store
@@ -663,16 +663,12 @@ zarr_path_exists <- function(store, target_path) {
 #' frame.
 #' @param compression The compression to use when writing the element. Can be
 #' one of `"none"` or `"gzip"`. Defaults to `"none"`.
-#'
-#' @return Whether the `path` exists in `file`
 zarr_write_compressed <- function(
   store,
   name,
   value,
-  compression = c("none", "gzip"),
-  chunks = TRUE
+  compression = c("none", "gzip")
 ) {
-  compression <- match.arg(compression)
   if (!is.null(dim(value))) {
     dims <- dim(value)
   } else {
