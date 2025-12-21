@@ -64,7 +64,5 @@ read_zarr <- function(
     "InMemoryAnnData" = zarr_adata$as_InMemoryAnnData(...)
   )
 
-  zarr_adata$close()
-
   adata
 }

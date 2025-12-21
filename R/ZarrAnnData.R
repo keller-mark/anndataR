@@ -1,7 +1,7 @@
 #' @title ZarrAnnData
 #'
 #' @description
-#' Implementation of an Zarr-backed `AnnData` object. This class provides an
+#' Implementation of a Zarr-backed `AnnData` object. This class provides an
 #' interface to a Zarr file and minimal data is stored in memory until it is
 #' requested by the user. It is primarily designed as an intermediate object
 #' when reading/writing Zarr files but can be useful for accessing parts of
@@ -20,7 +20,6 @@ ZarrAnnData <- R6::R6Class(
   cloneable = FALSE,
   private = list(
     .zarrobj = NULL,
-    .close_on_finalize = FALSE,
     .compression = NULL,
 
     .check_file_valid = function() {
@@ -31,14 +30,6 @@ ZarrAnnData <- R6::R6Class(
           )
         )
       }
-    },
-
-    #' @description Close the Zarr file when the object is garbage collected
-    finalize = function() {
-      if (private$.close_on_finalize) {
-        self$close()
-      }
-      invisible(self)
     }
   ),
   active = list(
@@ -313,8 +304,6 @@ ZarrAnnData <- R6::R6Class(
 
       private$.compression <- compression
 
-      private$.close_on_finalize <- is.character(file)
-
       is_readonly <- FALSE
 
       if (is.character(file)) {
@@ -377,7 +366,7 @@ ZarrAnnData <- R6::R6Class(
       attrs <- Rarr::read_zarr_attributes(file)
       if (!all(c("encoding-type", "encoding-version") %in% names(attrs))) {
         cli_abort(c(
-          "File {.file {file}} is not a valid Zarr file."
+          "File {.file {file}} is not a valid AnnData-Zarr file."
         ))
       }
 
@@ -396,7 +385,7 @@ ZarrAnnData <- R6::R6Class(
             paste0(
               "Error trying to write data (",
               paste(.anndata_slots[!are_null], collapse = ", "),
-              ") to an Zarr file opened in read-only mode."
+              ") to a Zarr file opened in read-only mode."
             )
           )
         }
@@ -412,9 +401,9 @@ ZarrAnnData <- R6::R6Class(
       self
     },
 
-    # We don't close
-    #' @description Close the Zarr store/file
-    close = function() {},
+    #' # We don't close
+    #' #' @description Close the Zarr store/file
+    #' close = function() {},
 
     #' @description See the `n_obs` field in [AnnData-usage]
     n_obs = function() {
@@ -481,17 +470,4 @@ as_ZarrAnnData <- function(
     mode = mode,
     compression = compression
   )
-}
-
-# nolint start: object_name_linter
-cleanup_ZarrAnnData <- function(...) {
-  # nolint end: object_name_linter
-  args <- list(...)
-
-  if (
-    !is.null(args$file) && is.character(args$file) && file.exists(args$file)
-  ) {
-    cli::cli_alert("Removing file: ", args$file)
-    unlink(args$file)
-  }
 }

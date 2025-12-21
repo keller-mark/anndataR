@@ -69,11 +69,10 @@ write_zarr_element <- function(
       }
     } else {
       # Fail if unknown
-      stop(
-        "Writing '",
-        class(value),
-        "' objects to Zarr stores is not supported"
-      )
+      cli_abort(c(
+        "Writing {.cls {class(value)}} objects to Zarr is not supported",
+        "i" = "Attempting to write to {.path {name}} in {.file {file}}"
+      ))
     }
 
   tryCatch(
@@ -96,9 +95,9 @@ write_zarr_element <- function(
         conditionMessage(e)
       )
       if (stop_on_error) {
-        stop(message)
+        cli_abort(message)
       } else {
-        warning(message)
+        cli_warn(message)
         NULL
       }
     }
@@ -122,12 +121,39 @@ write_zarr_encoding <- function(store, name, encoding, version) {
   )
 }
 
+#' Write Zarr null
+#'
+#' Write a null dataset to an Zarr file
+#'
+#' @param value Value to write, not used
+#' @param store An open Zarr handle
+#' @param name Name of the element within the Zarr store
+#' @param compression Not used as there is no value
+#' @param version Encoding version of the element to write
+#'
+#' @noRd
+write_zarr_null <- function(
+  value,
+  store,
+  name,
+  compression,
+  version = "0.1.0"
+) {
+  if (isFALSE(getOption("anndataR.write_null", "TRUE"))) {
+    return(invisible(NULL))
+  }
+
+  # TODO: how to write null in Zarr / Rarr?
+
+  write_zarr_encoding(store, name, "null", version)
+}
+
 #' Write Zarr dense array
 #'
 #' Write a dense array to a Zarr store
 #'
 #' @noRd
-#' 
+#'
 #' @param value Value to write
 #' @param store A Zarr store instance
 #' @param name Name of the element within the Zarr store
@@ -190,13 +216,10 @@ write_zarr_sparse_array <- function(
     type <- "csc_matrix"
     indices_attr <- "i"
   } else {
-    stop(
-      "Unsupported matrix format in ",
-      name,
-      ".",
-      "Supported formats are RsparseMatrix and CsparseMatrix",
-      "(and objects that inherit from those)."
-    )
+    cli_abort(c(
+      "Unsupported matrix format in {.path {name}}",
+      "i" = "Supported matrices inherit from {.cls RsparseMatrix} or {.cls CsparseMatrix}"
+    ))
   }
 
   # Write sparse matrix
@@ -527,10 +550,10 @@ write_zarr_data_frame <- function(
     index_value <- value[[index_name]]
     value[[index_name]] <- NULL
   } else {
-    stop(
-      "index must be a vector with length `nrow(value)` or a single character",
-      "string giving the name of a column in `value`"
-    )
+    cli_abort(paste(
+      "{.arg index} must be a vector with length {.code nrow(value)} or",
+      "a single character vector giving the name of a column in {.arg value}"
+    ))
   }
   if (is.null(index_value)) {
     index_value <- seq_len(nrow(value)) - 1L
@@ -651,7 +674,8 @@ zarr_path_exists <- function(store, target_path) {
 #'
 #' Write Zarr dataset with chosen compression (can be none)
 #'
-#' @return Whether the `path` exists in `file`
+#' @return  Returns (invisibly) `TRUE` if the array is successfully written.
+#'
 #' @noRd
 #'
 #' @param store Path to a Zarr store

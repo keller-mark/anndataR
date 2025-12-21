@@ -63,6 +63,7 @@ read_zarr_element <- function(
 
   read_fun <- switch(
     type,
+    "null" = read_zarr_null,
     "array" = read_zarr_dense_array,
     "rec-array" = read_zarr_rec_array,
     "csr_matrix" = read_zarr_csr_matrix,
@@ -75,12 +76,8 @@ read_zarr_element <- function(
     "string-array" = read_zarr_string_array,
     "nullable-integer" = read_zarr_nullable_integer,
     "nullable-boolean" = read_zarr_nullable_boolean,
-    stop(
-      "No function for reading H5AD encoding '",
-      type,
-      "' for element '",
-      name,
-      "'"
+    cli_abort(
+      "No function for reading Zarr encoding {.cls {type}} for element {.val {name}}"
     )
   )
 
@@ -98,17 +95,29 @@ read_zarr_element <- function(
         conditionMessage(e)
       )
       if (stop_on_error) {
-        stop(message)
+        cli_abort(message)
       } else {
-        warning(message)
+        cli_warn(message)
         NULL
       }
     }
   )
 }
 
-read_zarr_array <- function(store, name) {
-  Rarr::read_zarr_array(file.path(store, name))
+#' Read Zarr null
+#'
+#' Read a null value from an Zarr file
+#'
+#' @param file Path to a Zarr file or an open Zarr handle
+#' @param name Name of the element within the Zarr file
+#' @param version Encoding version of the element to read
+#'
+#' @return `NULL`
+#' @noRd
+read_zarr_null <- function(file, name, version = "0.1.0") {
+  version <- match.arg(version)
+
+  NULL
 }
 
 #' Read Zarr dense array
@@ -125,7 +134,7 @@ read_zarr_array <- function(store, name) {
 read_zarr_dense_array <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
 
-  data <- read_zarr_array(store, name)
+  data <- Rarr::read_zarr_array(file.path(store, name))
 
   data
 }
@@ -172,9 +181,18 @@ read_zarr_sparse_array <- function(
 
   attrs <- Rarr::read_zarr_attributes(file.path(store, name))
 
-  data <- as.vector(read_zarr_array(store, paste0(name, "/data")))
-  indices <- as.vector(read_zarr_array(store, paste0(name, "/indices")))
-  indptr <- as.vector(read_zarr_array(store, paste0(name, "/indptr")))
+  data <- as.vector(Rarr::read_zarr_array(file.path(
+    store,
+    paste0(name, "/data")
+  )))
+  indices <- as.vector(Rarr::read_zarr_array(file.path(
+    store,
+    paste0(name, "/indices")
+  )))
+  indptr <- as.vector(Rarr::read_zarr_array(file.path(
+    store,
+    paste0(name, "/indptr")
+  )))
   shape <- as.vector(unlist(attrs$shape, use.names = FALSE))
 
   if (type == "csc_matrix") {
@@ -280,8 +298,8 @@ read_zarr_nullable_integer <- function(store, name, version = "0.1.0") {
 read_zarr_nullable <- function(store, name, version = "0.1.0") {
   version <- match.arg(version)
 
-  mask <- read_zarr_array(store, paste0(name, "/mask"))
-  values <- read_zarr_array(store, paste0(name, "/values"))
+  mask <- Rarr::read_zarr_array(file.path(store, paste0(name, "/mask")))
+  values <- Rarr::read_zarr_array(file.path(store, paste0(name, "/values")))
 
   # Get values and set missing
   element <- values
@@ -303,7 +321,8 @@ read_zarr_nullable <- function(store, name, version = "0.1.0") {
 #' @noRd
 read_zarr_string_array <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
-  data <- read_zarr_array(store, name)
+
+  data <- Rarr::read_zarr_array(file.path(store, name))
 
   # convert "NA" to NA (as in rhdf5:::.h5postProcessDataset)
   data[data == "NA"] <- NA
@@ -325,8 +344,11 @@ read_zarr_string_array <- function(store, name, version = "0.2.0") {
 read_zarr_categorical <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
 
-  codes <- read_zarr_array(store, paste0(name, "/codes"))
-  categories <- read_zarr_array(store, paste0(name, "/categories"))
+  codes <- Rarr::read_zarr_array(file.path(store, paste0(name, "/codes")))
+  categories <- Rarr::read_zarr_array(file.path(
+    store,
+    paste0(name, "/categories")
+  ))
 
   # Get codes and convert to 1-based indexing
   codes <- codes + 1L
@@ -355,7 +377,7 @@ read_zarr_categorical <- function(store, name, version = "0.2.0") {
 #' @noRd
 read_zarr_string_scalar <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
-  as.character(read_zarr_array(store, name))
+  as.character(Rarr::read_zarr_array(file.path(store, name)))
 }
 
 #' Read Zarr numeric scalar
@@ -372,7 +394,7 @@ read_zarr_string_scalar <- function(store, name, version = "0.2.0") {
 read_zarr_numeric_scalar <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
 
-  value <- read_zarr_array(store, name)
+  value <- Rarr::read_zarr_array(file.path(store, name))
 
   # convert array to vector
   value <- as.vector(value)

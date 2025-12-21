@@ -104,10 +104,10 @@ adata.varp["test_varp"] = numpy.random.rand(adata.n_vars, adata.n_vars)
 adata.write_h5ad("inst/extdata/example.h5ad", compression="gzip")
 
 # Write Zarr 
-adata.write_zarr("inst/extdata/example2.zarr")
-# os.chdir("inst/extdata/")
-# zip = zipfile.ZipFile("example.zarr.zip", "w", zipfile.ZIP_DEFLATED)
-# zip.write("example.zarr")
-# shutil.rmtree("example.zarr")
-# zip.close()
+adata.write_zarr("inst/extdata/example.zarr")
+os.chdir("inst/extdata/")
+zip = zipfile.ZipFile("example.zarr.zip", "w", zipfile.ZIP_DEFLATED)
+zip.write("example.zarr")
+shutil.rmtree("example.zarr")
+zip.close()
 

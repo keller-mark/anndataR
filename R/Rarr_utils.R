@@ -7,6 +7,7 @@
 #' @param version zarr version
 #'
 #' @return `NULL`
+#'
 #' @noRd
 #'
 #' @examples
@@ -36,9 +37,9 @@ create_zarr_group <- function(store, name, version = "v2") {
       )
     },
     v3 = {
-      stop("Currently only zarr v2 is supported!")
+      cli_abort("Currently only zarr v2 is supported!")
     },
-    stop("only zarr v2 is supported. Use version = 'v2'")
+    cli_abort("Only zarr v2 is supported. Use version = 'v2'")
   )
 }
 
@@ -50,6 +51,7 @@ create_zarr_group <- function(store, name, version = "v2") {
 #' @param version zarr version
 #'
 #' @return `NULL`
+#'
 #' @noRd
 #'
 #' @examples
@@ -67,7 +69,8 @@ create_zarr <- function(store, version = "v2") {
 #'
 #' @param store the location of zarr store
 #'
-#' @return returns TRUE if zarr store is not empty
+#' @return returns TRUE if zarr store is empty
+#'
 #' @noRd
 #'
 #' @examples

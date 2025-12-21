@@ -113,7 +113,6 @@ read_h5ad_element <- function(
 #' @noRd
 read_h5ad_null <- function(file, name, version = "0.1.0") {
   version <- match.arg(version)
-
   NULL
 }
 
