@@ -1,3 +1,5 @@
+skip_if_not_installed("Rarr")
+
 file <- system.file("extdata", "example.zarr.zip", package = "anndataR")
 td <- tempdir(check = TRUE)
 unzip(file, exdir = td)

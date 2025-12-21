@@ -139,8 +139,7 @@ write_zarr_dense_array <- function(
   store,
   name,
   compression,
-  version = "0.2.0",
-  chunks = TRUE
+  version = "0.2.0"
 ) {
   version <- match.arg(version)
 
@@ -153,8 +152,7 @@ write_zarr_dense_array <- function(
     store,
     name,
     value,
-    compression,
-    chunks = chunks
+    compression
   )
 
   # Write attributes
