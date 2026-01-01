@@ -342,6 +342,20 @@ ZarrAnnData <- R6::R6Class(
         } else if (mode == "r") {
           is_readonly <- TRUE
         }
+      } else {
+        cli_abort(
+          paste(
+            "{.arg file} must be a {.cls character}"
+          )
+        )
+      }
+      
+      if (!zarr_path_exists(file, "/")) {
+        cli_abort(
+          paste(
+            "{.arg file} must be a valid zarr store/file"
+          )
+        )
       }
 
       is_empty <- is_zarr_empty(file)
@@ -400,10 +414,6 @@ ZarrAnnData <- R6::R6Class(
 
       self
     },
-
-    #' # We don't close
-    #' #' @description Close the Zarr store/file
-    #' close = function() {},
 
     #' @description See the `n_obs` field in [AnnData-usage]
     n_obs = function() {

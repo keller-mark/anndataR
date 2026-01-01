@@ -7,7 +7,7 @@
 An \code{ZarrAnnData} object
 }
 \description{
-Implementation of an Zarr-backed \code{AnnData} object. This class provides an
+Implementation of a Zarr-backed \code{AnnData} object. This class provides an
 interface to a Zarr file and minimal data is stored in memory until it is
 requested by the user. It is primarily designed as an intermediate object
 when reading/writing Zarr files but can be useful for accessing parts of
@@ -60,7 +60,6 @@ Other AnnData classes:
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-ZarrAnnData-new}{\code{ZarrAnnData$new()}}
-\item \href{#method-ZarrAnnData-close}{\code{ZarrAnnData$close()}}
 \item \href{#method-ZarrAnnData-n_obs}{\code{ZarrAnnData$n_obs()}}
 \item \href{#method-ZarrAnnData-n_vars}{\code{ZarrAnnData$n_vars()}}
 }
@@ -93,9 +92,6 @@ Other AnnData classes:
 \if{html}{\out{<a id="method-ZarrAnnData-new"></a>}}
 \if{latex}{\out{\hypertarget{method-ZarrAnnData-new}{}}}
 \subsection{Method \code{new()}}{
-Close the Zarr file when the object is garbage collected
-
-
 \code{ZarrAnnData} constructor
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ZarrAnnData$new(
@@ -155,16 +151,6 @@ The constructor creates a new Zarr \code{AnnData} interface object. This can
 either be used to either connect to an existing \code{.zarr} file or to
 create a new one. If any additional slot arguments are set an existing
 file will be overwritten.
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-ZarrAnnData-close"></a>}}
-\if{latex}{\out{\hypertarget{method-ZarrAnnData-close}{}}}
-\subsection{Method \code{close()}}{
-Close the Zarr store/file
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ZarrAnnData$close()}\if{html}{\out{</div>}}
 }
 
 }

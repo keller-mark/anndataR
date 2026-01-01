@@ -81,3 +81,31 @@ is_zarr_empty <- function(store) {
   files <- list.files(store, recursive = FALSE, full.names = FALSE)
   all(files %in% c(".zarray", ".zattrs", ".zgroup"))
 }
+
+#' Zarr path exists
+#'
+#' Check that a path in Zarr exists
+#'
+#' @return Whether the `target_path` exists in `store`
+#' @noRd
+#'
+#' @param store Path to a Zarr store
+#' @param target_path The path within the store to test for
+zarr_path_exists <- function(store, target_path) {
+  zarr <- file.path(store, target_path)
+  if (!dir.exists(zarr)) {
+    FALSE
+  } else {
+    list_files <- list.files(
+      path = zarr,
+      full.names = FALSE,
+      recursive = FALSE,
+      all.files = TRUE
+    )
+    if (any(c(".zarray", ".zattrs", ".zgroup") %in% list_files)) {
+      TRUE
+    } else {
+      FALSE
+    }
+  }
+}

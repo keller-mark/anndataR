@@ -642,34 +642,6 @@ write_empty_zarr <- function(
   write_zarr_encoding(store, "/varp", "dict", "0.1.0")
 }
 
-#' Zarr path exists
-#'
-#' Check that a path in Zarr exists
-#'
-#' @return Whether the `target_path` exists in `store`
-#' @noRd
-#'
-#' @param store Path to a Zarr store
-#' @param target_path The path within the store to test for
-zarr_path_exists <- function(store, target_path) {
-  zarr <- file.path(store, target_path)
-  if (!dir.exists(zarr)) {
-    FALSE
-  } else {
-    list_files <- list.files(
-      path = zarr,
-      full.names = FALSE,
-      recursive = FALSE,
-      all.files = TRUE
-    )
-    if (any(c(".zarray", ".zattrs", ".zgroup") %in% list_files)) {
-      TRUE
-    } else {
-      FALSE
-    }
-  }
-}
-
 #' Zarr write compressed
 #'
 #' Write Zarr dataset with chosen compression (can be none)
