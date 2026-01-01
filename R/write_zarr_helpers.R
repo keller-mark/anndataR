@@ -20,7 +20,8 @@ write_zarr_element <- function(
   value,
   store,
   name,
-  compression = c("none", "gzip"),
+  compression = c("none", "gzip", "blosc", "zstd", 
+                  "lzma", "bz2", "zlib", "lz4"),
   stop_on_error = FALSE,
   ...
 ) {
@@ -661,7 +662,8 @@ zarr_write_compressed <- function(
   store,
   name,
   value,
-  compression = c("none", "gzip")
+  compression = c("none", "gzip", "blosc", "zstd", 
+                  "lzma", "bz2", "zlib", "lz4")
 ) {
   if (!is.null(dim(value))) {
     dims <- dim(value)
@@ -679,5 +681,13 @@ zarr_write_compressed <- function(
 }
 
 .get_compressor <- function(x) {
-  switch(x, "none" = NULL, "gzip" = Rarr::use_gzip())
+  switch(x, 
+         "none" = NULL, 
+         "zstd" = Rarr::use_zstd(),
+         "blosc" = Rarr::use_blosc(),
+         "gzip" = Rarr::use_gzip(),
+         "lzma" = Rarr::use_lzma(),
+         "bz2" = Rarr::use_bz2(),
+         "zlib" = Rarr::use_zlib(),
+         "lz4" = Rarr::use_lz4())
 }

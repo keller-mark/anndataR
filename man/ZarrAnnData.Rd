@@ -107,7 +107,7 @@ Other AnnData classes:
   uns = NULL,
   shape = NULL,
   mode = c("a", "r", "r+", "w", "w-", "x"),
-  compression = c("none", "gzip")
+  compression = c("none", "gzip", "blosc", "zstd", "lzma", "bz2", "zlib", "lz4")
 )}\if{html}{\out{</div>}}
 }
 

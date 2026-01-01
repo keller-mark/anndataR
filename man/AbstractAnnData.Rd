@@ -424,7 +424,7 @@ See \code{\link[=write_zarr]{write_zarr()}} for details
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{AbstractAnnData$write_zarr(
   path,
-  compression = c("none", "gzip"),
+  compression = c("none", "gzip", "blosc", "zstd", "lzma", "bz2", "zlib", "lz4"),
   mode = c("w-", "r", "r+", "a", "w", "x")
 )}\if{html}{\out{</div>}}
 }

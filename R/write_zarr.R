@@ -93,7 +93,8 @@
 write_zarr <- function(
   object,
   path,
-  compression = c("none", "gzip"),
+  compression = c("none", "gzip", "blosc", "zstd", 
+                  "lzma", "bz2", "zlib", "lz4"),
   mode = c("w-", "r", "r+", "a", "w", "x"),
   ...
 ) {

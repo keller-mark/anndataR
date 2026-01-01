@@ -231,7 +231,7 @@ dir_size <- function(path) {
   sum(file.info(files)$size, na.rm = TRUE)
 }
 
-test_that("writing gzip compressed files works for Zarr", {
+test_that("writing compressed files works for Zarr", {
   dummy <- generate_dataset(100, 200)
   non_random_X <- matrix(5, 100, 200) # nolint
 
@@ -242,12 +242,15 @@ test_that("writing gzip compressed files works for Zarr", {
   )
 
   store_none <- tempfile(fileext = ".zarr")
-  store_gzip <- tempfile(fileext = ".zarr")
+  store_compressed <- tempfile(fileext = ".zarr")
 
   write_zarr(adata, store_none, compression = "none")
-  write_zarr(adata, store_gzip, compression = "gzip")
-
-  expect_true(dir_size(store_none) > dir_size(store_gzip))
+  
+  comp_list <- c("gzip", "blosc", "zstd", 
+                 "lzma", "bz2", "zlib", "lz4")  
+  for (comp in comp_list) {
+    write_zarr(adata, store_compressed, compression = comp)
+    unlink(store_compressed, recursive = TRUE)
+    expect_true(dir_size(store_none) > dir_size(store_compressed))
+  }
 })
-
-# TODO: add other zipping schemes ?
