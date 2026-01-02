@@ -104,7 +104,7 @@ test_that("reading string arrays is same for h5ad and zarr", {
 })
 
 test_that("reading mappings is same for h5ad and zarr", {
-  skip("for now, example.zarr and example.h5ad are not identical!")
+  # skip("for now, example.zarr and example.h5ad are not identical!")
   mapping_h5ad <- read_h5ad_mapping(file, "uns")
   mapping_zarr <- read_zarr_mapping(store, "uns")
   expect_equal(mapping_h5ad, mapping_zarr)

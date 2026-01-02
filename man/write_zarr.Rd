@@ -20,7 +20,9 @@ write_zarr(
 \item{path}{Path of the file to write to}
 
 \item{compression}{The compression algorithm to use when writing the Zarr
-file. Can be one of \code{"none"} or \code{"gzip"}. Defaults to \code{"none"}.}
+file. Can be one of \code{"none"}, \code{"gzip"}, \code{"blosc"}, \code{"zstd"},
+\code{"lzma"}, \code{"bz2"}, \code{"zlib"}, \code{"lz4"}. Defaults to \code{"none"}.
+See \code{help("compressors", package = "Rarr")}.}
 
 \item{mode}{The mode to open the Zarr file.
 \itemize{

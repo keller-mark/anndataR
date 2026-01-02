@@ -7,7 +7,9 @@
 #'   [`SeuratObject::Seurat`] object
 #' @param path Path of the file to write to
 #' @param compression The compression algorithm to use when writing the Zarr
-#'   file. Can be one of `"none"` or `"gzip"`. Defaults to `"none"`.
+#'   file. Can be one of `"none"`, `"gzip"`, `"blosc"`, `"zstd"`, 
+#'   `"lzma"`, `"bz2"`, `"zlib"`, `"lz4"`. Defaults to `"none"`.
+#'   See `help("compressors", package = "Rarr")`.
 #' @param mode The mode to open the Zarr file.
 #'
 #'   * `a` creates a new file or opens an existing one for read/write
