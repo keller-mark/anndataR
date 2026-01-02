@@ -363,6 +363,7 @@ write_zarr_string_array <- function(
     data,
     zarr_array_path = file.path(store, name),
     chunk_dim = dims,
+    order = "C",
     compressor = .get_compressor(compression)
   )
 
@@ -591,6 +592,8 @@ write_zarr_data_frame <- function(
   # empty numeric vector
   if (length(col_order) == 0) {
     col_order <- numeric()
+  } else {
+    col_order <- array(col_order)
   }
 
   Rarr::write_zarr_attributes(
@@ -675,7 +678,8 @@ zarr_write_compressed <- function(
   Rarr::write_zarr_array(
     data,
     zarr_array_path = file.path(store, name),
-    chunk_dim = dims,
+    chunk_dim = dims, 
+    order = "C",
     compressor = .get_compressor(compression)
   )
 }
