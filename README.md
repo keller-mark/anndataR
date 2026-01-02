@@ -20,7 +20,7 @@
 ## Features of {anndataR}
 
 - Provide an `R6` class to work with `AnnData` objects in R (either in-memory or on-disk)
-- Read/write `*.h5ad` files natively
+- Read/write `*.h5ad` files and `*.zarr` stores natively
 - Convert to/from `SingleCellExperiment` objects
 - Convert to/from `Seurat` objects
 
@@ -50,6 +50,8 @@ the task you want to perform.
 
 - To read/write `*.h5ad` files, install [rhdf5](https://www.bioconductor.org/packages/rhdf5):  
   `BiocManager::install("rhdf5")`
+- To read/write `*.zarr` stores, install [Rarr](https://www.bioconductor.org/packages/Rarr):  
+  `BiocManager::install("Rarr")`
 - To convert to/from `SingleCellExperiment` objects, install [SingleCellExperiment](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html):  
   `BiocManager::install("SingleCellExperiment")`
 - To convert to/from `Seurat` objects, install [SeuratObject](https://cran.r-project.org/package=SeuratObject):  
