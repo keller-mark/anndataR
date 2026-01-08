@@ -145,7 +145,13 @@ write_zarr_null <- function(
   }
 
   # TODO: how to write null in Zarr / Rarr?
-
+  # for now we write as dim 1 and chunk 1
+  # but original dim=() shape=()
+  Rarr::create_empty_zarr_array(file.path(store, name),
+                                dim = 1, 
+                                chunk_dim = 1, 
+                                data_type = "logical")
+  
   write_zarr_encoding(store, name, "null", version)
 }
 
@@ -679,7 +685,7 @@ zarr_write_compressed <- function(
     data,
     zarr_array_path = file.path(store, name),
     chunk_dim = dims, 
-    order = "C",
+    order = if(length(dims) > 1) "C" else "F",
     compressor = .get_compressor(compression)
   )
 }
