@@ -239,19 +239,8 @@ read_zarr_sparse_array <- function(
 #' @noRd
 read_zarr_rec_array <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
-
-  # read list of arrays
-  field_names <- list.dirs(
-    path = file.path(store, name),
-    recursive = FALSE,
-    full.names = FALSE
-  )
-  setNames(
-    lapply(field_names, function(x) {
-      as.vector(Rarr::read_zarr_array(file.path(store, name, x)))
-    }),
-    field_names
-  )
+  Rarr::read_zarr_array(file.path(store, name)) |>
+    lapply(as.vector)
 }
 
 #' Read Zarr nullable boolean

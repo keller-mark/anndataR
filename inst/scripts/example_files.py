@@ -1,11 +1,10 @@
 # python v3.13.5
-import anndata  # anndata v0.11.4
-import scanpy  # scanpy v1.11.4
-import numpy  # numpy v2.2.6
-import pandas  # pandas v2.3.0
-import scipy.sparse  # scipy v1.14.1
-import zarr  # zarr 2.14.2
-
+import anndata
+import scanpy
+import numpy
+import pandas
+import scipy.sparse
+import zarr
 import os
 import shutil
 import zipfile 
@@ -106,8 +105,11 @@ adata.write_h5ad("inst/extdata/example.h5ad", compression="gzip")
 # Write Zarr 
 adata.write_zarr("inst/extdata/example.zarr")
 os.chdir("inst/extdata/")
-zip = zipfile.ZipFile("example.zarr.zip", "w", zipfile.ZIP_DEFLATED)
-zip.write("example.zarr")
+with zipfile.ZipFile("example.zarr.zip", "w", zipfile.ZIP_DEFLATED) as z:
+    for root, dirs, files in os.walk("example.zarr"):
+        for file in files:
+            full_path = os.path.join(root, file)
+            # preserve relative paths inside the zip
+            arcname = os.path.relpath(full_path, start=os.path.dirname("example.zarr"))
+            z.write(full_path, arcname)
 shutil.rmtree("example.zarr")
-zip.close()
-

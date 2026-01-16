@@ -369,7 +369,7 @@ write_zarr_string_array <- function(
     data,
     zarr_array_path = file.path(store, name),
     chunk_dim = dims,
-    order = "C",
+    order = if(length(dims) > 1) "C" else "F",
     compressor = .get_compressor(compression)
   )
 
