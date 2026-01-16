@@ -60,7 +60,7 @@ seurat_obj
 
 Similarly, we can read from a Zarr store which we also demonstrate with an example `.zarr` store: 
 
-```{r prep-file, eval=FALSE}
+```{r prep-file-zarr, eval=FALSE}
 zarr_path <- system.file("extdata", "example.zarr.zip", package = "anndataR")
 td <- tempdir(check = TRUE)
 unzip(zarr_path, exdir = td)
