@@ -106,15 +106,15 @@ read_zarr_element <- function(
 
 #' Read Zarr null
 #'
-#' Read a null value from an Zarr file
+#' Read a null value from an Zarr store
 #'
-#' @param file Path to a Zarr file or an open Zarr handle
-#' @param name Name of the element within the Zarr file
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
 #' @param version Encoding version of the element to read
 #'
 #' @return `NULL`
 #' @noRd
-read_zarr_null <- function(file, name, version = "0.1.0") {
+read_zarr_null <- function(store, name, version = "0.1.0") {
   version <- match.arg(version)
 
   NULL

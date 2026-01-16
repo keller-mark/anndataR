@@ -29,7 +29,9 @@ write_zarr_element <- function(
 
   # Sparse matrices
   write_fun <-
-    if (inherits(value, "sparseMatrix")) {
+    if (is.null(value)) {
+      write_zarr_null
+    } else if (inherits(value, "sparseMatrix")) {
       # Sparse matrices
       write_zarr_sparse_array
     } else if (is.factor(value)) {
