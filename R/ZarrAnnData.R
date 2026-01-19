@@ -295,9 +295,16 @@ ZarrAnnData <- R6::R6Class(
       uns = NULL,
       shape = NULL,
       mode = c("a", "r", "r+", "w", "w-", "x"),
-      # compression = c("none", "gzip")
-      compression = c("none", "gzip", "blosc", "zstd", 
-                      "lzma", "bz2", "zlib", "lz4")
+      compression = c(
+        "none",
+        "gzip",
+        "blosc",
+        "zstd",
+        "lzma",
+        "bz2",
+        "zlib",
+        "lz4"
+      )
     ) {
       check_requires("ZarrAnnData", "Rarr", where = "Bioc")
 
@@ -351,7 +358,7 @@ ZarrAnnData <- R6::R6Class(
           )
         )
       }
-      
+
       if (!zarr_path_exists(file, "/")) {
         cli_abort(
           paste(
@@ -457,8 +464,16 @@ as_ZarrAnnData <- function(
   # nolint end: object_name_linter
   adata,
   file,
-  compression = c("none", "gzip", "blosc", "zstd", 
-                  "lzma", "bz2", "zlib", "lz4"),
+  compression = c(
+    "none",
+    "gzip",
+    "blosc",
+    "zstd",
+    "lzma",
+    "bz2",
+    "zlib",
+    "lz4"
+  ),
   mode = c("w-", "r", "r+", "a", "w", "x")
 ) {
   if (!(inherits(adata, "AbstractAnnData"))) {

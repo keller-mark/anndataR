@@ -103,7 +103,7 @@
 #'     Write the `AnnData` object to an HDF5 file, see [write_h5ad()]
 #'   }
 #' }
-#' 
+#'
 #' \describe{
 #'   \item{
 #'     `write_zarr()`

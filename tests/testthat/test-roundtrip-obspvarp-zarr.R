@@ -163,6 +163,6 @@ for (name in test_names) {
       )
     }
   )
-  
+
   # TODO: is there a way to compare two zarr stores
 }

@@ -20,8 +20,16 @@ write_zarr_element <- function(
   value,
   store,
   name,
-  compression = c("none", "gzip", "blosc", "zstd", 
-                  "lzma", "bz2", "zlib", "lz4"),
+  compression = c(
+    "none",
+    "gzip",
+    "blosc",
+    "zstd",
+    "lzma",
+    "bz2",
+    "zlib",
+    "lz4"
+  ),
   stop_on_error = FALSE,
   ...
 ) {
@@ -149,11 +157,13 @@ write_zarr_null <- function(
   # TODO: how to write null in Zarr / Rarr?
   # for now we write as dim 1 and chunk 1
   # but original dim=() shape=()
-  Rarr::create_empty_zarr_array(file.path(store, name),
-                                dim = 1, 
-                                chunk_dim = 1, 
-                                data_type = "logical")
-  
+  Rarr::create_empty_zarr_array(
+    file.path(store, name),
+    dim = 1,
+    chunk_dim = 1,
+    data_type = "logical"
+  )
+
   write_zarr_encoding(store, name, "null", version)
 }
 
@@ -371,7 +381,11 @@ write_zarr_string_array <- function(
     data,
     zarr_array_path = file.path(store, name),
     chunk_dim = dims,
-    order = if(length(dims) > 1) "C" else "F",
+    order = if (length(dims) > 1) "C" else "F",
+    # TODO: string arrays require vlen-utf8 filter support
+    # see https://github.com/Huber-group-EMBL/Rarr/issues/98
+    data_type = "<U",
+    nchar = max(nchar(value)),
     compressor = .get_compressor(compression)
   )
 
@@ -673,8 +687,7 @@ zarr_write_compressed <- function(
   store,
   name,
   value,
-  compression = c("none", "gzip", "blosc", "zstd", 
-                  "lzma", "bz2", "zlib", "lz4")
+  compression = c("none", "gzip", "blosc", "zstd", "lzma", "bz2", "zlib", "lz4")
 ) {
   if (!is.null(dim(value))) {
     dims <- dim(value)
@@ -686,20 +699,22 @@ zarr_write_compressed <- function(
   Rarr::write_zarr_array(
     data,
     zarr_array_path = file.path(store, name),
-    chunk_dim = dims, 
-    order = if(length(dims) > 1) "C" else "F",
+    chunk_dim = dims,
+    order = if (length(dims) > 1) "C" else "F",
     compressor = .get_compressor(compression)
   )
 }
 
 .get_compressor <- function(x) {
-  switch(x, 
-         "none" = NULL, 
-         "zstd" = Rarr::use_zstd(),
-         "blosc" = Rarr::use_blosc(),
-         "gzip" = Rarr::use_gzip(),
-         "lzma" = Rarr::use_lzma(),
-         "bz2" = Rarr::use_bz2(),
-         "zlib" = Rarr::use_zlib(),
-         "lz4" = Rarr::use_lz4())
+  switch(
+    x,
+    "none" = NULL,
+    "zstd" = Rarr::use_zstd(),
+    "blosc" = Rarr::use_blosc(),
+    "gzip" = Rarr::use_gzip(),
+    "lzma" = Rarr::use_lzma(),
+    "bz2" = Rarr::use_bz2(),
+    "zlib" = Rarr::use_zlib(),
+    "lz4" = Rarr::use_lz4()
+  )
 }

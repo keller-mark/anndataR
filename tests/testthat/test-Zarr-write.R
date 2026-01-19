@@ -245,9 +245,8 @@ test_that("writing compressed files works for Zarr", {
   store_compressed <- tempfile(fileext = ".zarr")
 
   write_zarr(adata, store_none, compression = "none")
-  
-  comp_list <- c("gzip", "blosc", "zstd", 
-                 "lzma", "bz2", "zlib", "lz4")  
+
+  comp_list <- c("gzip", "blosc", "zstd", "lzma", "bz2", "zlib", "lz4")
   for (comp in comp_list) {
     write_zarr(adata, store_compressed, compression = comp)
     unlink(store_compressed, recursive = TRUE)

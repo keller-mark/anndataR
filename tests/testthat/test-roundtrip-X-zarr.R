@@ -120,6 +120,6 @@ for (name in test_names) {
       adata_py$X
     )
   })
-  
+
   # TODO: is there a way to compare two zarr stores
 }

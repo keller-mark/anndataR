@@ -32,8 +32,10 @@ test_that("reading sparse matrices is same for h5ad and zarr", {
 })
 
 test_that("reading recarrays is the same for h5ad and zarr", {
-  skip(paste0("read_zarr_rec_array and read_h5ad_rec_array produce different", 
-              " shape and length"))
+  skip(paste0(
+    "read_zarr_rec_array and read_h5ad_rec_array produce different",
+    " shape and length"
+  ))
   array_list <- read_h5ad_rec_array(
     file,
     "uns/rank_genes_groups/logfoldchanges"
