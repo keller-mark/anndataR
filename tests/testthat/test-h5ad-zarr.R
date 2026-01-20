@@ -11,6 +11,17 @@ td <- tempdir(check = TRUE)
 unzip(zarr_dir, exdir = td)
 store <- file.path(td, "example.zarr")
 
+# compare rec arrays of h5ad and zarr
+compare_rec_array <- function(rec_array_h5ad, rec_array_zarr) {
+  expect_equal(length(rec_array_h5ad), length(rec_array_zarr[[1]]))
+  expect_equal(do.call(rbind, rec_array_h5ad), {
+    array_list_zarr_mat <- do.call(cbind, rec_array_zarr)
+    rownames(array_list_zarr_mat) <-
+      paste(0:(length(rownames(array_list_zarr_mat)) + 1))
+    array_list_zarr_mat
+  })
+}
+
 test_that("reading dense matrices is same for h5ad and zarr", {
   mat_h5ad <- read_h5ad_dense_array(file, "layers/dense_counts")
   mat_zarr <- read_zarr_dense_array(store, "layers/dense_counts")
@@ -42,12 +53,13 @@ test_that("reading recarrays is the same for h5ad and zarr", {
     store,
     "uns/rank_genes_groups/logfoldchanges"
   )
-  expect_equal(length(array_list_h5ad), length(array_list_zarr[[1]]))
-  expect_equal(do.call(rbind, array_list_h5ad), {
-    array_list_zarr_mat <- do.call(cbind, array_list_zarr)
-    rownames(array_list_zarr_mat) <- paste(0:5)
-    array_list_zarr_mat
-  })
+  compare_rec_array(array_list_h5ad, array_list_zarr)
+  # expect_equal(length(array_list_h5ad), length(array_list_zarr[[1]]))
+  # expect_equal(do.call(rbind, array_list_h5ad), {
+  #   array_list_zarr_mat <- do.call(cbind, array_list_zarr)
+  #   rownames(array_list_zarr_mat) <- paste(0:5)
+  #   array_list_zarr_mat
+  # })
 })
 
 test_that("reading 1D numeric arrays is same for h5ad and zarr", {
@@ -108,10 +120,27 @@ test_that("reading string arrays is same for h5ad and zarr", {
 })
 
 test_that("reading mappings is same for h5ad and zarr", {
-  skip("for now, example.zarr and example.h5ad are not identical!")
+  # since rec arrays are read differently across h5ad and zarr,
+  # we compare all elements individually
   mapping_h5ad <- read_h5ad_mapping(file, "uns")
   mapping_zarr <- read_zarr_mapping(store, "uns")
-  expect_equal(mapping_h5ad, mapping_zarr)
+  for (nm in names(mapping_h5ad)) {
+    if (!nm %in% "rank_genes_groups") {
+      expect_equal(mapping_h5ad[[nm]], mapping_zarr[[nm]])
+    } else {
+      map_ranks_h5ad <- mapping_h5ad$rank_genes_groups
+      map_ranks_zarr <- mapping_zarr$rank_genes_groups
+      lapply(
+        names(map_ranks_h5ad)[!names(mapping_h5ad) %in% "params"],
+        function(nmr) {
+          compare_rec_array(
+            map_ranks_h5ad[[nmr]],
+            map_ranks_zarr[[nmr]]
+          )
+        }
+      )
+    }
+  }
 })
 
 test_that("reading dataframes is the same for h5ad and zarr", {
