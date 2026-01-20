@@ -32,21 +32,22 @@ test_that("reading sparse matrices is same for h5ad and zarr", {
 })
 
 test_that("reading recarrays is the same for h5ad and zarr", {
-  skip(paste0(
-    "read_zarr_rec_array and read_h5ad_rec_array produce different",
-    " shape and length"
-  ))
-  array_list <- read_h5ad_rec_array(
+  # h5ad returns a list of 6 arrays of length 100
+  array_list_h5ad <- read_h5ad_rec_array(
     file,
     "uns/rank_genes_groups/logfoldchanges"
   )
-  expect_true(is.list(array_list))
-  expect_equal(names(array_list), c("0", "1", "2", "3", "4", "5"))
-  for (array in array_list) {
-    expect_true(is.array(array))
-    expect_type(array, "double")
-    expect_equal(dim(array), 100)
-  }
+  # zarr returns a list of 100 arrays of length 6
+  array_list_zarr <- read_zarr_rec_array(
+    store,
+    "uns/rank_genes_groups/logfoldchanges"
+  )
+  expect_equal(length(array_list_h5ad), length(array_list_zarr[[1]]))
+  expect_equal(do.call(rbind, array_list_h5ad), {
+    array_list_zarr_mat <- do.call(cbind, array_list_zarr)
+    rownames(array_list_zarr_mat) <- paste(0:5)
+    array_list_zarr_mat
+  })
 })
 
 test_that("reading 1D numeric arrays is same for h5ad and zarr", {

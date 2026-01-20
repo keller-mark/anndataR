@@ -154,9 +154,6 @@ write_zarr_null <- function(
     return(invisible(NULL))
   }
 
-  # TODO: how to write null in Zarr / Rarr?
-  # for now we write as dim 1 and chunk 1
-  # but original dim=() shape=()
   Rarr::create_empty_zarr_array(
     file.path(store, name),
     dim = 0,
@@ -376,7 +373,7 @@ write_zarr_string_array <- function(
   # to read as "NA" -> NA later after Rarr:read_zarr_array
   value[is.na(value)] <- "NA"
 
-  if(any(dims == 0)){
+  if (any(dims == 0)) {
     Rarr::create_empty_zarr_array(
       file.path(store, name),
       dim = dims,
@@ -397,7 +394,7 @@ write_zarr_string_array <- function(
       data_type = "<U",
       nchar = max(nchar(value)),
       compressor = .get_compressor(compression)
-    ) 
+    )
   }
 
   write_zarr_encoding(store, name, "string-array", version)
