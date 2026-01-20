@@ -159,8 +159,8 @@ write_zarr_null <- function(
   # but original dim=() shape=()
   Rarr::create_empty_zarr_array(
     file.path(store, name),
-    dim = 1,
-    chunk_dim = 1,
+    dim = 0,
+    chunk_dim = 0,
     data_type = "logical"
   )
 
@@ -376,18 +376,29 @@ write_zarr_string_array <- function(
   # to read as "NA" -> NA later after Rarr:read_zarr_array
   value[is.na(value)] <- "NA"
 
-  data <- array(data = value, dim = dims)
-  Rarr::write_zarr_array(
-    data,
-    zarr_array_path = file.path(store, name),
-    chunk_dim = dims,
-    order = if (length(dims) > 1) "C" else "F",
-    # TODO: string arrays require vlen-utf8 filter support
-    # see https://github.com/Huber-group-EMBL/Rarr/issues/98
-    data_type = "<U",
-    nchar = max(nchar(value)),
-    compressor = .get_compressor(compression)
-  )
+  if(any(dims == 0)){
+    Rarr::create_empty_zarr_array(
+      file.path(store, name),
+      dim = dims,
+      chunk_dim = dims,
+      data_type = "<U",
+      nchar = 1,
+      compressor = .get_compressor(compression)
+    )
+  } else {
+    data <- array(data = value, dim = dims)
+    Rarr::write_zarr_array(
+      data,
+      zarr_array_path = file.path(store, name),
+      chunk_dim = dims,
+      order = if (length(dims) > 1) "C" else "F",
+      # TODO: string arrays require vlen-utf8 filter support
+      # see https://github.com/Huber-group-EMBL/Rarr/issues/98
+      data_type = "<U",
+      nchar = max(nchar(value)),
+      compressor = .get_compressor(compression)
+    ) 
+  }
 
   write_zarr_encoding(store, name, "string-array", version)
 }
@@ -689,12 +700,7 @@ zarr_write_compressed <- function(
   value,
   compression = c("none", "gzip", "blosc", "zstd", "lzma", "bz2", "zlib", "lz4")
 ) {
-  if (!is.null(dim(value))) {
-    dims <- dim(value)
-  } else {
-    dims <- length(value)
-  }
-
+  dims <- dim(value) %||% length(value)
   data <- array(data = value, dim = dims)
   Rarr::write_zarr_array(
     data,
