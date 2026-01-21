@@ -150,7 +150,7 @@ test_that("reading H5AD as SingleCellExperiment is same for h5ad and zarr", {
   skip_if_not_installed("S4Vectors")
   sce_h5ad <- read_h5ad(filename, as = "SingleCellExperiment")
   sce_zarr <- read_zarr(store, as = "SingleCellExperiment")
-  # rec arrays are parsed differently between h5ad and zarr, 
+  # rec arrays are parsed differently between h5ad and zarr,
   # so we set them equal here
   S4Vectors::metadata(sce_zarr) <- S4Vectors::metadata(sce_h5ad)
   expect_equal(sce_h5ad, sce_zarr)
@@ -160,9 +160,9 @@ test_that("reading H5AD as Seurat is same for h5ad and zarr", {
   skip_if_not_installed("Seurat")
   sce_h5ad <- read_h5ad(filename, as = "Seurat")
   sce_zarr <- read_zarr(store, as = "Seurat")
-  # rec arrays are parsed differently between h5ad and zarr, 
+  # rec arrays are parsed differently between h5ad and zarr,
   # so we set them equal here
-  Seurat::Misc(sce_zarr, "logfoldchanges") <- 
+  Seurat::Misc(sce_zarr, "logfoldchanges") <-
     Seurat::Misc(sce_h5ad, "logfoldchanges")
   expect_equal(sce_h5ad, sce_zarr)
 })
