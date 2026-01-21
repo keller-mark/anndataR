@@ -12,9 +12,9 @@ unzip(zarr_dir, exdir = td)
 store <- file.path(td, "example.zarr")
 
 # compare rec arrays of h5ad and zarr
-compare_rec_array <- function(rec_array_h5ad, rec_array_zarr) {
-  expect_equal(length(rec_array_h5ad), length(rec_array_zarr[[1]]))
-  expect_equal(do.call(rbind, rec_array_h5ad), {
+compare_rec_array <- function(rec_array_h5ad, rec_array_zarr, test_fun) {
+  test_fun(length(rec_array_h5ad), length(rec_array_zarr[[1]]))
+  test_fun(do.call(rbind, rec_array_h5ad), {
     array_list_zarr_mat <- do.call(cbind, rec_array_zarr)
     rownames(array_list_zarr_mat) <-
       paste(0:(nrow(array_list_zarr_mat) - 1))
@@ -53,7 +53,7 @@ test_that("reading recarrays is the same for h5ad and zarr", {
     store,
     "uns/rank_genes_groups/logfoldchanges"
   )
-  compare_rec_array(array_list_h5ad, array_list_zarr)
+  compare_rec_array(array_list_h5ad, array_list_zarr, expect_equal)
 })
 
 test_that("reading 1D numeric arrays is same for h5ad and zarr", {
@@ -129,7 +129,8 @@ test_that("reading mappings is same for h5ad and zarr", {
         function(nmr) {
           compare_rec_array(
             map_ranks_h5ad[[nmr]],
-            map_ranks_zarr[[nmr]]
+            map_ranks_zarr[[nmr]],
+            expect_equal
           )
         }
       )
