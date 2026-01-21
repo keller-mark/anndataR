@@ -162,7 +162,7 @@ test_that("reading H5AD as Seurat is same for h5ad and zarr", {
   sce_zarr <- read_zarr(store, as = "Seurat")
   # rec arrays are parsed differently between h5ad and zarr,
   # so we set them equal here
-  Seurat::Misc(sce_zarr, "logfoldchanges") <-
-    Seurat::Misc(sce_h5ad, "logfoldchanges")
+  Seurat::Misc(sce_zarr, "rank_genes_groups") <-
+    Seurat::Misc(sce_h5ad, "rank_genes_groups")
   expect_equal(sce_h5ad, sce_zarr)
 })
