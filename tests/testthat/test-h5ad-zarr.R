@@ -17,7 +17,7 @@ compare_rec_array <- function(rec_array_h5ad, rec_array_zarr) {
   expect_equal(do.call(rbind, rec_array_h5ad), {
     array_list_zarr_mat <- do.call(cbind, rec_array_zarr)
     rownames(array_list_zarr_mat) <-
-      paste(0:(length(rownames(array_list_zarr_mat)) + 1))
+      paste(0:(nrow(array_list_zarr_mat) - 1))
     array_list_zarr_mat
   })
 }
@@ -54,12 +54,6 @@ test_that("reading recarrays is the same for h5ad and zarr", {
     "uns/rank_genes_groups/logfoldchanges"
   )
   compare_rec_array(array_list_h5ad, array_list_zarr)
-  # expect_equal(length(array_list_h5ad), length(array_list_zarr[[1]]))
-  # expect_equal(do.call(rbind, array_list_h5ad), {
-  #   array_list_zarr_mat <- do.call(cbind, array_list_zarr)
-  #   rownames(array_list_zarr_mat) <- paste(0:5)
-  #   array_list_zarr_mat
-  # })
 })
 
 test_that("reading 1D numeric arrays is same for h5ad and zarr", {
@@ -131,7 +125,7 @@ test_that("reading mappings is same for h5ad and zarr", {
       map_ranks_h5ad <- mapping_h5ad$rank_genes_groups
       map_ranks_zarr <- mapping_zarr$rank_genes_groups
       lapply(
-        names(map_ranks_h5ad)[!names(mapping_h5ad) %in% "params"],
+        names(map_ranks_h5ad)[!names(map_ranks_h5ad) %in% "params"],
         function(nmr) {
           compare_rec_array(
             map_ranks_h5ad[[nmr]],
@@ -149,18 +143,26 @@ test_that("reading dataframes is the same for h5ad and zarr", {
   expect_equal(df_h5ad, df_zarr)
 })
 
+rhdf5::H5Fclose(file)
+
 test_that("reading H5AD as SingleCellExperiment is same for h5ad and zarr", {
-  skip("for now, example.zarr and example.h5ad are not identical!")
   skip_if_not_installed("SingleCellExperiment")
-  sce_h5ad <- read_h5ad(file, as = "SingleCellExperiment")
+  skip_if_not_installed("S4Vectors")
+  sce_h5ad <- read_h5ad(filename, as = "SingleCellExperiment")
   sce_zarr <- read_zarr(store, as = "SingleCellExperiment")
+  # rec arrays are parsed differently between h5ad and zarr, 
+  # so we set them equal here
+  S4Vectors::metadata(sce_zarr) <- S4Vectors::metadata(sce_h5ad)
   expect_equal(sce_h5ad, sce_zarr)
 })
 
 test_that("reading H5AD as Seurat is same for h5ad and zarr", {
-  skip("for now, example.zarr and example.h5ad are not identical!")
   skip_if_not_installed("Seurat")
-  sce_h5ad <- read_h5ad(file, as = "Seurat")
+  sce_h5ad <- read_h5ad(filename, as = "Seurat")
   sce_zarr <- read_zarr(store, as = "Seurat")
+  # rec arrays are parsed differently between h5ad and zarr, 
+  # so we set them equal here
+  Seurat::Misc(sce_zarr, "logfoldchanges") <- 
+    Seurat::Misc(sce_h5ad, "logfoldchanges")
   expect_equal(sce_h5ad, sce_zarr)
 })

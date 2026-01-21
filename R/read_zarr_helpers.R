@@ -405,16 +405,19 @@ read_zarr_numeric_scalar <- function(store, name, version = "0.2.0") {
 read_zarr_mapping <- function(store, name, version = "0.1.0") {
   version <- match.arg(version)
 
-  columns <- list.dirs(
+  items <- list.dirs(
     path = file.path(store, name),
     recursive = FALSE,
     full.names = FALSE
   )
-
+  
   # Omit Zarr metadata files from the list of columns.
-  columns <- columns[!columns %in% c(".zgroup", ".zattrs", ".zarray")]
+  items <- items[!items %in% c(".zgroup", ".zattrs", ".zarray")]
+  
+  # h5ad like ordering, see H5_ITER_INC
+  items <- H5_ITER_INC_ordering(items)
 
-  read_zarr_collection(store, name, columns)
+  read_zarr_collection(store, name, items)
 }
 
 #' Read Zarr data frame
