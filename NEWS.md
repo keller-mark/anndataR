@@ -4,6 +4,8 @@
 - Add continuous benchmarking using bencher (PR #423, PR #425).
 - Handle unnamed `SingleCellExperiment` assays in `as_AnnData()` by automatically assigning names with a warning (PR #420).
 - Optimise sparse matrix reading performance by avoiding `Matrix::sparseMatrix` and constructing objects manually (PR #417).
+- Allow manually setting chunk size for HDF5 writes (PR #424).
+- Add auto-chunking for HDF5 writes to improve performance (PR #424).
 
 # anndataR 1.1.0
 
