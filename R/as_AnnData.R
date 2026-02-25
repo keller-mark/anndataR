@@ -82,6 +82,16 @@
 #'
 # nolint end: line_length_linter
 #'
+#'   ## Unnamed assays
+#'
+#'   If `assayNames(x)` is `NULL` or any assay names are empty they will
+#'   automatically be named with a warning:
+#'
+#'   **Examples:**
+#'
+#'   - Old names: `NULL` -> New names: `"assay1", "assay2", ...`
+#'   - Old names: `"counts"` -> New names: `"counts", "assay2"`
+#'
 #' @section Converting from a `Seurat` object:
 #'
 #'   Only one assay can be converted from a [`SeuratObject::Seurat`] object to
@@ -118,7 +128,7 @@
 #'   - if `assay_name` is not the default assay, they will be _skipped_ with a
 #'     warning
 #'
-#'   To override this behavior, provide a custom mapping using the
+#'   To override this behaviour, provide a custom mapping using the
 #'   `obsp_mapping` argument.
 #'
 #'   ## Unexpected dimensions

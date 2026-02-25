@@ -50,6 +50,32 @@ from_SingleCellExperiment <- function(
     )
   }
 
+  assay_names <- SummarizedExperiment::assayNames(sce)
+  if (
+    length(SummarizedExperiment::assays(sce)) > 0 &&
+      (is.null(assay_names) || any(assay_names == ""))
+  ) {
+    if (is.null(assay_names)) {
+      assay_names <- paste0(
+        "assay",
+        seq_along(SummarizedExperiment::assays(sce))
+      )
+    } else {
+      empty_names <- which(assay_names == "")
+      assay_names[empty_names] <- paste0("assay", empty_names)
+    }
+
+    cli_warn(c(
+      paste(
+        "Some {.field assays} in {.arg sce} are missing names.",
+        "They will automatically be named for conversion."
+      ),
+      "!" = "Old assay names: {style_vec(SummarizedExperiment::assayNames(sce))}",
+      "i" = "New assay names: {style_vec(assay_names)}"
+    ))
+    SummarizedExperiment::assayNames(sce) <- assay_names
+  }
+
   layers_mapping <- get_mapping(
     layers_mapping,
     .from_SCE_guess_layers,
@@ -178,6 +204,13 @@ from_SingleCellExperiment <- function(
     reduction <- SingleCellExperiment::reducedDim(sce, reduction_name)
     if (inherits(reduction, "LinearEmbeddingMatrix")) {
       varm_mapping[reduction_name] <- reduction_name
+    } else if ("rotation" %in% names(attributes(reduction))) {
+      cli_warn(paste(
+        "Reduction {.val {reduction_name}} in SCE object has a {.attr rotation} attribute,",
+        "but is not a {.cls LinearEmbeddingMatrix}.",
+        "To include the {.attr rotation} information in {.code varm},",
+        "convert it to a {.cls LinearEmbeddingMatrix} first."
+      ))
     }
   }
 
@@ -211,6 +244,20 @@ from_SingleCellExperiment <- function(
       object
     }
   } else {
+    if (!is.data.frame(object) && !is.list(object)) {
+      cli_warn(c(
+        paste(
+          "Converting unknown object of class {.cls {class(object)[1]}} from",
+          "{.cls SingleCellExperiment}"
+        ),
+        "!" = "It will be returned as is but this may result in other errors",
+        "i" = paste(
+          "This may be solved by converting to a {.cls matrix}/{.cls Matrix},",
+          "{.cls data.frame}/{.cls DataFrame}, or {.cls list}/{.cls SimpleList}"
+        )
+      ))
+    }
+
     object
   }
 }
