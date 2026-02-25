@@ -102,7 +102,7 @@ zarr_path_exists <- function(store, target_path) {
       recursive = FALSE,
       all.files = TRUE
     )
-    if (any(c(".zarray", ".zattrs", ".zgroup") %in% list_files)) {
+    if (any(c(".zarray", ".zattrs", ".zgroup", "zarr.json") %in% list_files)) {
       TRUE
     } else {
       FALSE

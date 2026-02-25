@@ -61,10 +61,11 @@ seurat_obj
 Similarly, we can read from a Zarr store which we also demonstrate with an example `.zarr` store: 
 
 ```{r prep-file-zarr, eval=FALSE}
-zarr_path <- system.file("extdata", "example.zarr.zip", package = "anndataR")
+# Please use "example_v3.zarr.zip" for AnnData stored as Zarr version 3
+zarr_path <- system.file("extdata", "example_v2.zarr.zip", package = "anndataR")
 td <- tempdir(check = TRUE)
 unzip(zarr_path, exdir = td)
-zarr_path <- file.path(td, "example.zarr")
+zarr_path <- file.path(td, "example_v2.zarr")
 
 seurat_obj_zarr <- read_zarr(zarr_path, as = "Seurat")
 seurat_obj_zarr

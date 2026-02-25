@@ -1,9 +1,9 @@
 skip_if_not_installed("Rarr")
 
-file <- system.file("extdata", "example.zarr.zip", package = "anndataR")
+file <- system.file("extdata", "example_v2.zarr.zip", package = "anndataR")
 td <- tempdir(check = TRUE)
 unzip(file, exdir = td)
-store <- file.path(td, "example.zarr")
+store <- file.path(td, "example_v2.zarr")
 
 test_that("opening Zarr works", {
   adata <- ZarrAnnData$new(store, mode = "r")

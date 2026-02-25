@@ -12,7 +12,14 @@ import zipfile
 # This script uses Python to create example H5AD and Zarr files for testing
 # interoperability between languages. It is designed to be a small but
 # relatively complex file that tests reading of different types and data
-# structures. The standard scanpy workflow has also been applied to populate
+# structures. 
+# 
+# In order to run the script, please first use requirements.yml file to 
+# create a conda environment using:
+#
+# conda env create -f requirements.yml
+# 
+# The standard scanpy workflow has also been applied to populate
 # some of the most common information from real analyses. It should be updated
 # to test new issues as they are discovered.
 #
@@ -22,7 +29,7 @@ import zipfile
 # (https://black.readthedocs.io/en/stable/).
 #
 # Version: 0.4.0
-# Date: 2025-11-24
+# Date: 2026-02-25
 #
 # CHANGELOG
 # 
@@ -102,14 +109,24 @@ adata.varp["test_varp"] = numpy.random.rand(adata.n_vars, adata.n_vars)
 # Write the H5AD file
 adata.write_h5ad("inst/extdata/example.h5ad", compression="gzip")
 
-# Write Zarr 
-adata.write_zarr("inst/extdata/example.zarr")
+# Write Zarr files in both v2 and v3 formats and zip them
 os.chdir("inst/extdata/")
-with zipfile.ZipFile("example.zarr.zip", "w", zipfile.ZIP_DEFLATED) as z:
-    for root, dirs, files in os.walk("example.zarr"):
-        for file in files:
-            full_path = os.path.join(root, file)
-            # preserve relative paths inside the zip
-            arcname = os.path.relpath(full_path, start=os.path.dirname("example.zarr"))
-            z.write(full_path, arcname)
-shutil.rmtree("example.zarr")
+for fmt in (2, 3):
+    anndata.settings.zarr_write_format = fmt
+
+    zarr_dir = f"example_v{fmt}.zarr"
+    zip_path = f"{zarr_dir}.zip"
+
+    adata.write_zarr(zarr_dir)
+
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+        for root, dirs, files in os.walk(zarr_dir):
+            for file in files:
+                full_path = os.path.join(root, file)
+                arcname = os.path.relpath(
+                    full_path,
+                    start=os.path.dirname(zarr_dir)
+                )
+                z.write(full_path, arcname)
+
+    shutil.rmtree(zarr_dir)

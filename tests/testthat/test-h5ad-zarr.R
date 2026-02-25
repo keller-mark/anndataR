@@ -6,10 +6,10 @@ filename <- system.file("extdata", "example.h5ad", package = "anndataR")
 file <- rhdf5::H5Fopen(filename, flags = "H5F_ACC_RDONLY", native = FALSE)
 
 # zarr file
-zarr_dir <- system.file("extdata", "example.zarr.zip", package = "anndataR")
+zarr_dir <- system.file("extdata", "example_v2.zarr.zip", package = "anndataR")
 td <- tempdir(check = TRUE)
 unzip(zarr_dir, exdir = td)
-store <- file.path(td, "example.zarr")
+store <- file.path(td, "example_v2.zarr")
 
 # compare rec arrays of h5ad and zarr
 compare_rec_array <- function(rec_array_h5ad, rec_array_zarr, test_fun) {
@@ -81,7 +81,6 @@ test_that("reading 1D nullable arrays is same for h5ad and zarr", {
   array_1d_zarr <- read_zarr_dense_array(store, "obs/FloatNA")
   expect_equal(array_1d_h5ad, array_1d_zarr)
 
-  # TODO: check this test, zarr Bools are stored as dense array hence no mask is given
   array_1d_h5ad <- read_h5ad_nullable_boolean(file, "obs/Bool")
   array_1d_zarr <- read_zarr_nullable_boolean(store, "obs/Bool")
   expect_equal(array_1d_h5ad, array_1d_zarr)

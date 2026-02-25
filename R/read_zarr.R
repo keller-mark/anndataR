@@ -28,10 +28,11 @@
 #' @family AnnData creators
 #'
 #' @examples
-#' zarr_dir <- system.file("extdata", "example.zarr.zip", package = "anndataR")
+#' # Please use "example_v3.zarr.zip" for AnnData stored as Zarr version 3
+#' zarr_dir <- system.file("extdata", "example_v2.zarr.zip", package = "anndataR")
 #' td <- tempdir(check = TRUE)
 #' unzip(zarr_dir, exdir = td)
-#' zarr_store <- file.path(td, "example.zarr")
+#' zarr_store <- file.path(td, "example_v2.zarr")
 #'
 #' # Read the Zarr as a SingleCellExperiment object
 #' if (requireNamespace("SingleCellExperiment", quietly = TRUE)) {

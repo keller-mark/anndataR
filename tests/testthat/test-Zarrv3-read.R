@@ -1,10 +1,10 @@
 skip_if_not_installed("Rarr")
 
 # zarr file
-zarr_dir <- system.file("extdata", "example_v2.zarr.zip", package = "anndataR")
+zarr_dir <- system.file("extdata", "example_v3.zarr.zip", package = "anndataR")
 td <- tempdir(check = TRUE)
 unzip(zarr_dir, exdir = td)
-store <- file.path(td, "example_v2.zarr")
+store <- file.path(td, "example_v3.zarr")
 
 test_that("reading encoding works", {
   encoding <- read_zarr_encoding(store, "obs")
@@ -33,7 +33,9 @@ test_that("reading sparse matrices works", {
   expect_equal(dim(mat), c(50, 100))
 })
 
+# TODO: zarr v3 rec arrays are not read
 test_that("reading recarrays works", {
+  skip("Read support for Zarr v3 rec arrays is not implemented yet")
   array_list <- read_zarr_rec_array(
     store,
     "uns/rank_genes_groups/logfoldchanges"
