@@ -273,15 +273,15 @@ warn_matrix_dimnames_not_writeable <- function(
 H5_ITER_INC_ORDERING <- function(x) {
   prefix <- sub("_.*$", "", x)
   suffix <- ifelse(grepl("_", x), sub("^[^_]*_", "", x), NA)
-  
+
   # rules
   starts_capital <- grepl("^[A-Z]", x)
   has_suffix <- !is.na(suffix)
   suffix_capital <- has_suffix & grepl("^[A-Z]", suffix)
-  
+
   # stable prefix grouping
   prefix_id <- match(prefix, unique(prefix))
-  
+
   x[order(
     !starts_capital,
     prefix_id,
