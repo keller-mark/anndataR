@@ -115,8 +115,10 @@ test_that("reading string arrays is same for h5ad and zarr", {
 # TODO: I will skip this test for now since the rec arrays are read differently
 # for some elements
 test_that("reading mappings is same for h5ad and zarr", {
-  skip("skipping test for mappings since rec arrays are read differently 
-       across h5ad and zarr")
+  skip(
+    "skipping test for mappings since rec arrays are read differently 
+       across h5ad and zarr"
+  )
   # since rec arrays are read differently across h5ad and zarr,
   # we compare all elements individually
   mapping_h5ad <- read_h5ad_mapping(file, "uns")
