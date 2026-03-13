@@ -361,9 +361,9 @@ AbstractAnnData <- R6::R6Class(
       mode = c("w-", "r", "r+", "a", "w", "x")
     ) {
       write_zarr(
-        object = self, 
-        path, 
-        compression = compression, 
+        object = self,
+        path,
+        compression = compression,
         mode = mode
       )
     }
