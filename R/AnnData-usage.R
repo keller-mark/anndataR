@@ -122,7 +122,7 @@
 #'
 #' \describe{
 #'   \item{[AnnData()]}{Create an [InMemoryAnnData] object}
-#'   \item{[read_h5ad()]}{Read an `AnnData` from an H5AD file}
+#'   \item{[read_h5ad()]}{Read an `AnnData` from a H5AD file}
 #'   \item{[read_zarr()]}{Read an `AnnData` from a Zarr store}
 #'   \item{[as_AnnData()]}{Convert other objects to an `AnnData` object}
 #' }

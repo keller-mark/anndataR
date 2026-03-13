@@ -162,7 +162,7 @@ Write the \code{AnnData} object to a Zarr store, see \code{\link[=write_zarr]{wr
 
 \describe{
 \item{\code{\link[=AnnData]{AnnData()}}}{Create an \link{InMemoryAnnData} object}
-\item{\code{\link[=read_h5ad]{read_h5ad()}}}{Read an \code{AnnData} from an H5AD file}
+\item{\code{\link[=read_h5ad]{read_h5ad()}}}{Read an \code{AnnData} from a H5AD file}
 \item{\code{\link[=read_zarr]{read_zarr()}}}{Read an \code{AnnData} from a Zarr store}
 \item{\code{\link[=as_AnnData]{as_AnnData()}}}{Convert other objects to an \code{AnnData} object}
 }
