@@ -1,38 +1,36 @@
-#' Read H5AD encoding
+#' Read Zarr encoding
 #'
-#' Read the encoding and version of an element in a H5AD file
+#' Read the encoding and version of an element in a Zarr store
 #'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
 #'
 #' @return A named list with names type and version
 #'
 #' @noRd
 read_zarr_encoding <- function(store, name) {
-  # Path can be to array or group
-  g <- pizzarr::zarr_open(store, path = name)
-  attrs <- g$get_attrs()$to_list()
-
-  if (!all(c("encoding-type", "encoding-version") %in% names(attrs))) {
-    path <- "TODO: get path from store"
-    stop(
-      "Encoding attributes not found for element '", name, "' ",
-      "in '", path, "'"
-    )
-  }
-
-  list(
-    type = attrs[["encoding-type"]],
-    version = attrs[["encoding-version"]]
+  tryCatch(
+    {
+      attrs <- Rarr::read_zarr_attributes(file.path(store, name))
+      list(
+        type = attrs[["encoding-type"]],
+        version = attrs[["encoding-version"]]
+      )
+    },
+    error = function(e) {
+      cli_abort(
+        "Encoding attributes not found for element {.val {name}} in {.path {store}}"
+      )
+    }
   )
 }
 
-#' Read H5AD element
+#' Read Zarr element
 #'
-#' Read an element from a H5AD file
+#' Read an element from a Zarr store
 #'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
 #' @param type The encoding type of the element to read
 #' @param version The encoding version of the element to read
 #' @param stop_on_error Whether to stop on error or generate a warning instead
@@ -45,14 +43,27 @@ read_zarr_encoding <- function(store, name) {
 #' @return Value depending on the encoding
 #'
 #' @noRd
-read_zarr_element <- function(store, name, type = NULL, version = NULL, stop_on_error = FALSE, ...) {
+read_zarr_element <- function(
+  store,
+  name,
+  type = NULL,
+  version = NULL,
+  stop_on_error = FALSE,
+  ...
+) {
+  if (!zarr_path_exists(store, name)) {
+    return(NULL)
+  }
+
   if (is.null(type)) {
     encoding_list <- read_zarr_encoding(store, name)
     type <- encoding_list$type
     version <- encoding_list$version
   }
 
-  read_fun <- switch(type,
+  read_fun <- switch(
+    type,
+    "null" = read_zarr_null,
     "array" = read_zarr_dense_array,
     "rec-array" = read_zarr_rec_array,
     "csr_matrix" = read_zarr_csr_matrix,
@@ -65,9 +76,8 @@ read_zarr_element <- function(store, name, type = NULL, version = NULL, stop_on_
     "string-array" = read_zarr_string_array,
     "nullable-integer" = read_zarr_nullable_integer,
     "nullable-boolean" = read_zarr_nullable_boolean,
-    stop(
-      "No function for reading H5AD encoding '", type,
-      "' for element '", name, "'"
+    cli_abort(
+      "No function for reading Zarr encoding {.cls {type}} for element {.val {name}}"
     )
   )
 
@@ -77,31 +87,45 @@ read_zarr_element <- function(store, name, type = NULL, version = NULL, stop_on_
     },
     error = function(e) {
       message <- paste0(
-        "Error reading element '", name, "' of type '", type, "':\n",
+        "Error reading element '",
+        name,
+        "' of type '",
+        type,
+        "':\n",
         conditionMessage(e)
       )
       if (stop_on_error) {
-        stop(message)
+        cli_abort(message)
       } else {
-        warning(message)
-        return(NULL)
+        cli_warn(message)
+        NULL
       }
     }
   )
 }
 
-read_zarr_array <- function(store, name) {
-  zarr_arr <- pizzarr::zarr_open_array(store, path = name)
-  nested_arr <- zarr_arr$get_item("...")
-  return(nested_arr$data)
+#' Read Zarr null
+#'
+#' Read a null value from an Zarr store
+#'
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
+#' @param version Encoding version of the element to read
+#'
+#' @return `NULL`
+#' @noRd
+read_zarr_null <- function(store, name, version = "0.1.0") {
+  version <- match.arg(version)
+
+  NULL
 }
 
-#' Read H5AD dense array
+#' Read Zarr dense array
 #'
-#' Read a dense array from an H5AD file
+#' Read a dense array from a Zarr store
 #'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
 #' @param version Encoding version of the element to read
 #'
 #' @return a matrix or a vector if 1D
@@ -110,17 +134,9 @@ read_zarr_array <- function(store, name) {
 read_zarr_dense_array <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
 
-  # Extract the NestedArray contents as a base R array.
-  darr <- read_zarr_array(store, name)
+  data <- Rarr::read_zarr_array(file.path(store, name))
 
-
-  # TODO: ideally, native = TRUE should take care of the row order and column order,
-  # but it doesn't
-  # If the dense array is a 1D matrix, convert to vector
-  if (length(dim(darr)) == 1) {
-    darr <- as.vector(darr)
-  }
-  darr
+  data
 }
 
 read_zarr_csr_matrix <- function(store, name, version) {
@@ -141,12 +157,12 @@ read_zarr_csc_matrix <- function(store, name, version) {
   )
 }
 
-#' Read H5AD sparse array
+#' Read Zarr sparse array
 #'
-#' Read a sparse array from an H5AD file
+#' Read a sparse array from a Zarr store
 #'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
 #' @param version Encoding version of the element to read
 #' @param type Type of the sparse matrix, either "csr_matrix" or "csc_matrix"
 #'
@@ -154,17 +170,30 @@ read_zarr_csc_matrix <- function(store, name, version) {
 #' @importFrom Matrix sparseMatrix
 #'
 #' @noRd
-read_zarr_sparse_array <- function(store, name, version = "0.1.0",
-                                   type = c("csr_matrix", "csc_matrix")) {
+read_zarr_sparse_array <- function(
+  store,
+  name,
+  version = "0.1.0",
+  type = c("csr_matrix", "csc_matrix")
+) {
   version <- match.arg(version)
   type <- match.arg(type)
 
-  g <- pizzarr::zarr_open_group(store, path = name)
+  attrs <- Rarr::read_zarr_attributes(file.path(store, name))
 
-  data <- as.vector(read_zarr_array(store, paste0(name, "/data")))
-  indices <- as.vector(read_zarr_array(store, paste0(name, "/indices")))
-  indptr <- as.vector(read_zarr_array(store, paste0(name, "/indptr")))
-  shape <- as.vector(unlist(g$get_attrs()$to_list()$shape, use.names = FALSE))
+  data <- as.vector(Rarr::read_zarr_array(file.path(
+    store,
+    paste0(name, "/data")
+  )))
+  indices <- as.vector(Rarr::read_zarr_array(file.path(
+    store,
+    paste0(name, "/indices")
+  )))
+  indptr <- as.vector(Rarr::read_zarr_array(file.path(
+    store,
+    paste0(name, "/indptr")
+  )))
+  shape <- as.vector(unlist(attrs$shape, use.names = FALSE))
 
   if (type == "csc_matrix") {
     mtx <- Matrix::sparseMatrix(
@@ -189,12 +218,12 @@ read_zarr_sparse_array <- function(store, name, version = "0.1.0",
   mtx
 }
 
-#' Read H5AD recarray
+#' Read Zarr recarray
 #'
-#' Read a recarray from an H5AD file
+#' Read a recarray from a Zarr store
 #'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
 #' @param version Encoding version of the element to read
 #'
 #' @details
@@ -210,16 +239,16 @@ read_zarr_sparse_array <- function(store, name, version = "0.1.0",
 #' @noRd
 read_zarr_rec_array <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
-
-  stop("Reading recarrays is not yet implemented")
+  Rarr::read_zarr_array(file.path(store, name)) |>
+    lapply(as.vector)
 }
 
-#' Read H5AD nullable boolean
+#' Read Zarr nullable boolean
 #'
-#' Read a nullable boolean from an H5AD file
+#' Read a nullable boolean from a Zarr store
 #'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
 #' @param version Encoding version of the element to read
 #'
 #' @return a boolean vector
@@ -229,12 +258,12 @@ read_zarr_nullable_boolean <- function(store, name, version = "0.1.0") {
   as.logical(read_zarr_nullable(store, name, version))
 }
 
-#' Read H5AD nullable integer
+#' Read Zarr nullable integer
 #'
-#' Read a nullable integer from an H5AD file
+#' Read a nullable integer from a Zarr store
 #'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
 #' @param version Encoding version of the element to read
 #'
 #' @return an integer vector
@@ -244,12 +273,12 @@ read_zarr_nullable_integer <- function(store, name, version = "0.1.0") {
   as.integer(read_zarr_nullable(store, name, version))
 }
 
-#' Read H5AD nullable
+#' Read Zarr nullable
 #'
-#' Read a nullable vector (boolean or integer) from an H5AD file
+#' Read a nullable vector (boolean or integer) from a Zarr store
 #'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
 #' @param version Encoding version of the element to read
 #'
 #' @return a nullable vector
@@ -258,22 +287,22 @@ read_zarr_nullable_integer <- function(store, name, version = "0.1.0") {
 read_zarr_nullable <- function(store, name, version = "0.1.0") {
   version <- match.arg(version)
 
-  mask <- read_zarr_array(store, paste0(name, "/mask"))
-  values <- read_zarr_array(store, paste0(name, "/values"))
+  mask <- Rarr::read_zarr_array(file.path(store, paste0(name, "/mask")))
+  values <- Rarr::read_zarr_array(file.path(store, paste0(name, "/values")))
 
   # Get values and set missing
   element <- values
   element[mask] <- NA
 
-  return(element)
+  element
 }
 
-#' Read H5AD string array
+#' Read Zarr string array
 #'
-#' Read a string array from an H5AD file
+#' Read a string array from a Zarr store
 #'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
 #' @param version Encoding version of the element to read
 #'
 #' @return a character vector/matrix
@@ -281,23 +310,21 @@ read_zarr_nullable <- function(store, name, version = "0.1.0") {
 #' @noRd
 read_zarr_string_array <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
-  # reads in transposed
-  string_array <- read_zarr_array(store, name)
 
-  # If the array is 1D, convert to vector
-  if (length(dim(string_array)) == 1) {
-    string_array <- as.vector(string_array)
-  }
+  data <- Rarr::read_zarr_array(file.path(store, name))
 
-  string_array
+  # convert "NA" to NA (as in rhdf5:::.h5postProcessDataset)
+  data[data == "NA"] <- NA
+
+  data
 }
 
-#' Read H5AD categorical
+#' Read Zarr categorical
 #'
-#' Read a categorical from an H5AD file
+#' Read a categorical from a Zarr store
 #'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
 #' @param version Encoding version of the element to read
 #'
 #' @return a factor
@@ -306,46 +333,32 @@ read_zarr_string_array <- function(store, name, version = "0.2.0") {
 read_zarr_categorical <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
 
-  codes <- read_zarr_array(store, paste0(name, "/codes"))
-  categories <- read_zarr_array(store, paste0(name, "/categories"))
+  codes <- Rarr::read_zarr_array(file.path(store, paste0(name, "/codes")))
+  categories <- Rarr::read_zarr_array(file.path(
+    store,
+    paste0(name, "/categories")
+  ))
 
   # Get codes and convert to 1-based indexing
-  codes <- codes + 1
-
-  if (!length(dim(codes)) == 1) {
-    stop("There is currently no support for multidimensional categorical arrays")
-  }
+  codes <- codes + 1L
 
   # Set missing values
-  codes[codes == 0] <- NA
+  codes[codes == 0L] <- NA_integer_
 
   levels <- categories
 
-  g <- pizzarr::zarr_open_group(store, path = name)
-
-  attributes <- g$get_attrs()$to_list()
+  attributes <- Rarr::read_zarr_attributes(file.path(store, name))
   ordered <- attributes[["ordered"]]
-  if (is.null(ordered) || is.na(ordered)) {
-    # This version of {rhdf5} doesn't yet support ENUM type attributes so we
-    # can't tell if the categorical should be ordered,
-    # see https://github.com/grimbough/rhdf5/issues/125
-    warning(
-      "Unable to determine if categorical '", name,
-      "' is ordered, assuming it isn't"
-    )
-
-    ordered <- FALSE
-  }
 
   factor(codes, labels = levels, ordered = ordered)
 }
 
-#' Read H5AD string scalar
+#' Read Zarr string scalar
 #'
-#' Read a string scalar from an H5AD file
+#' Read a string scalar from a Zarr store
 #'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
 #' @param version Encoding version of the element to read
 #'
 #' @return a character vector of length 1
@@ -353,16 +366,15 @@ read_zarr_categorical <- function(store, name, version = "0.2.0") {
 #' @noRd
 read_zarr_string_scalar <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
-  scalar <- as.character(read_zarr_array(store, name))
-  return(scalar)
+  as.character(Rarr::read_zarr_array(file.path(store, name)))
 }
 
-#' Read H5AD numeric scalar
+#' Read Zarr numeric scalar
 #'
-#' Read a numeric scalar from an H5AD file
+#' Read a numeric scalar from a Zarr store
 #'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
 #' @param version Encoding version of the element to read
 #'
 #' @return a numeric vector of length 1
@@ -370,16 +382,21 @@ read_zarr_string_scalar <- function(store, name, version = "0.2.0") {
 #' @noRd
 read_zarr_numeric_scalar <- function(store, name, version = "0.2.0") {
   version <- match.arg(version)
-  scalar <- as.numeric(read_zarr_array(store, name))
-  return(scalar)
+
+  value <- Rarr::read_zarr_array(file.path(store, name))
+
+  # convert array to vector
+  value <- as.vector(value)
+
+  value
 }
 
-#' Read H5AD mapping
+#' Read Zarr mapping
 #'
-#' Read a mapping from an H5AD file
+#' Read a mapping from a Zarr store
 #'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
 #' @param version Encoding version of the element to read
 #'
 #' @return a named list
@@ -387,110 +404,78 @@ read_zarr_numeric_scalar <- function(store, name, version = "0.2.0") {
 #' @noRd
 read_zarr_mapping <- function(store, name, version = "0.1.0") {
   version <- match.arg(version)
-  groupname <- paste0("/", name)
 
-  g <- pizzarr::zarr_open(store)
-  columns <- g$get_store()$listdir(name)
+  items <- list.dirs(
+    path = file.path(store, name),
+    recursive = FALSE,
+    full.names = FALSE
+  )
 
-  read_zarr_collection(store, name, columns)
+  # Omit Zarr metadata files from the list of columns.
+  items <- items[!items %in% c(".zgroup", ".zattrs", ".zarray")]
+
+  # h5ad like ordering, see H5_ITER_INC
+  items <- H5_ITER_INC_ORDERING(items)
+
+  read_zarr_collection(store, name, items)
 }
 
-#' Read H5AD data frame
+#' Read Zarr data frame
 #'
-#' Read a data frame from an H5AD file
+#' Read a data frame from a Zarr store
 #'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
 #' @param version Encoding version of the element to read
-#' @param include_index Whether or not to include the index as a column
-#'
-#' @details
-#' If `include_index == TRUE` the index stored in the HDF5 file is added as a
-#' column to output `data.frame` using the defined index name as the column
-#' name and this is set as an attribute. If `include_index == FALSE` the index
-#' is not provided in the output. In either case row names are not set.
 #'
 #' @return a data.frame
 #'
 #' @noRd
-read_zarr_data_frame <- function(store, name, include_index = TRUE,
-                                 version = "0.2.0") {
+read_zarr_data_frame <- function(
+  store,
+  name,
+  version = "0.2.0"
+) {
   version <- match.arg(version)
 
-  g <- pizzarr::zarr_open_group(store, path = name)
+  attrs <- Rarr::read_zarr_attributes(file.path(store, name))
+  index_name <- attrs[["_index"]]
+  column_order <- attrs[["column-order"]]
 
-  attributes <- g$get_attrs()$to_list()
-  index_name <- attributes$`_index`
-  column_order <- attributes$`column-order`
+  index <- read_zarr_element(store, file.path(name, index_name))
+  data <- read_zarr_collection(store, name, column_order)
 
-  columns <- read_zarr_collection(store, name, column_order)
-
-  if (length(columns) == 0) {
-    index <- read_zarr_data_frame_index(store, name)
-    df <- data.frame(row.names = seq_along(index))
-  } else {
-    df <- data.frame(columns)
-  }
-
-  if (isTRUE(include_index)) {
-    index <- read_zarr_data_frame_index(store, name)
-
-    # The default index name is not allowed as a column name so adjust it
-    if (index_name == "_index") {
-      rownames(df) <- index
-    }
-
-  }
-
-  df
+  as.data.frame(
+    row.names = index,
+    data,
+    check.names = FALSE,
+    fix.empty.names = FALSE
+  )
 }
 
-#' Read H5AD data frame index
+#' Read multiple Zarr datatypes
 #'
-#' Read the index of a data frame from an H5AD file
-#'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
-#' @param version Encoding version of the element to read
-#'
-#' @return an object containing the index
-#'
-#' @noRd
-read_zarr_data_frame_index <- function(store, name, version = "0.2.0") {
-  version <- match.arg(version)
-
-  g <- pizzarr::zarr_open_group(store, path = name)
-
-  attributes <- g$get_attrs()$to_list()
-  index_name <- attributes$`_index`
-
-  read_zarr_element(store, file.path(name, index_name))
-}
-
-#' Read multiple H5AD datatypes
-#'
-#' @param file Path to a H5AD file or an open H5AD handle
-#' @param name Name of the element within the H5AD file
-#' @param column_order Vector of item names (in order)
+#' @param store A Zarr store instance
+#' @param name Name of the element within the Zarr store
+#' @param item_names Vector of item names (in order)
 #'
 #' @return a named list
 #'
 #' @noRd
-read_zarr_collection <- function(store, name, column_order) {
-  columns <- list()
-  for (col_name in column_order) {
-    new_name <- paste0(name, "/", col_name)
-    tryCatch({
+read_zarr_collection <- function(store, name, item_names) {
+  items <- lapply(
+    item_names,
+    function(item_name) {
+      new_name <- paste0(name, "/", item_name)
       encoding <- read_zarr_encoding(store, new_name)
-      columns[[col_name]] <- read_zarr_element(
+      read_zarr_element(
         store = store,
         name = new_name,
         type = encoding$type,
         version = encoding$version
       )
-    }, error = function(cond) {
-      warning("Not reading file '", new_name, "' in collection")
-    })
-  }
-  columns
+    }
+  )
+  names(items) <- item_names
+  items
 }

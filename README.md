@@ -1,168 +1,111 @@
-# anndataR
+# {anndataR}: An R package for working with AnnData objects <img src="man/figures/logo.png" align="right" alt="anndataR logo" width=120 />
 
-
-<!-- README.md is generated from README.qmd. Please edit that file -->
 <!-- badges: start -->
-
-[![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![CRAN
-status](https://www.r-pkg.org/badges/version/anndataR.png)](https://CRAN.R-project.org/package=anndataR)
+[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
+[![R-CMD-check-bioc](https://github.com/scverse/anndataR/actions/workflows/R-CMD-check-bioc.yaml/badge.svg)](https://github.com/scverse/anndataR/actions/workflows/R-CMD-check-bioc.yaml)
+[![Codecov test coverage](https://codecov.io/gh/scverse/anndataR/graph/badge.svg)](https://app.codecov.io/gh/scverse/anndataR)
+[![Bioc release status](http://www.bioconductor.org/shields/build/release/bioc/anndataR.svg)](https://bioconductor.org/checkResults/release/bioc-LATEST/anndataR)
+[![Bioc devel status](http://www.bioconductor.org/shields/build/devel/bioc/anndataR.svg)](https://bioconductor.org/checkResults/devel/bioc-LATEST/anndataR)
+[![Bioc downloads rank](https://bioconductor.org/shields/downloads/release/anndataR.svg)](http://bioconductor.org/packages/stats/bioc/anndataR/)
+[![Bioc support](https://bioconductor.org/shields/posts/anndataR.svg)](https://support.bioconductor.org/tag/anndataR)
+[![Bioc history](https://bioconductor.org/shields/years-in-bioc/anndataR.svg)](https://bioconductor.org/packages/release/bioc/html/anndataR.html#since)
+[![Bioc last commit](https://bioconductor.org/shields/lastcommit/devel/bioc/anndataR.svg)](http://bioconductor.org/checkResults/devel/bioc-LATEST/anndataR/)
+[![Bioc dependencies](https://bioconductor.org/shields/dependencies/release/anndataR.svg)](https://bioconductor.org/packages/release/bioc/html/anndataR.html#since)
 <!-- badges: end -->
 
-`{anndataR}` aims to make the AnnData format a first-class citizen in
-the R ecosystem, and to make it easy to work with AnnData files in R,
-either directly or by converting it to a SingleCellExperiment or Seurat
-object.
+**{anndataR}** aims to make the `AnnData` format a first-class citizen in the R ecosystem, and to make it easy to work with AnnData files in R, either directly or by converting them to a `SingleCellExperiment` or `Seurat` object.
 
-Feature list:
+**{anndataR}** is a an scverse® community project fiscally sponsored by the [Chan Zuckerberg Initiative](https://chanzuckerberg.com/).
 
-- Provide an `R6` class to work with AnnData objects in R (either
-  in-memory or on-disk).
-- Read/write `*.h5ad` files natively
+## Features of {anndataR}
+
+- Provide an `R6` class to work with `AnnData` objects in R (either in-memory or on-disk)
+- Read/write `*.h5ad` files and `*.zarr` stores natively
 - Convert to/from `SingleCellExperiment` objects
 - Convert to/from `Seurat` objects
 
-> [!WARNING]
->
-> This package is still in the experimental stage, and may not work as
-> expected. You can find the status of development of anndataR on the
-> [feature tracking
-> page](https://anndatar.data-intuitive.com/articles/design.html#feature-tracking)
-> of the website.Please report any issues you encounter.
+Please [report](https://github.com/scverse/anndataR/issues) any issues you encounter.
 
 ## Installation
 
-You can install the development version of `{anndataR}` like so:
+You can install **{anndataR}** from Bioconductor using **BiocManager**:
 
-``` r
-devtools::install_github("scverse/anndataR")
+```r
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
+BiocManager::install("anndataR")
 ```
 
-You might need to install suggested dependencies manually, depending on
+Or you can install the development version of **{anndataR}** from GitHub like so:
+
+``` r
+# install.packages("pak")
+pak::pak("scverse/anndataR")
+```
+
+You will need to install additional dependencies, depending on
 the task you want to perform.
 
-- To read/write \*.h5ad files, you need to install
-  [hdf5r](https://cran.r-project.org/package=hdf5r):  
-  `BiocManager::install("hdf5r")`
-- To convert to/from `SingleCellExperiment` objects, you need to install
-  [SingleCellExperiment](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html):  
+- To read/write `*.h5ad` files, install [rhdf5](https://www.bioconductor.org/packages/rhdf5):  
+  `BiocManager::install("rhdf5")`
+- To read/write `*.zarr` stores, install [Rarr](https://www.bioconductor.org/packages/Rarr):  
+  `BiocManager::install("Rarr")`
+- To convert to/from `SingleCellExperiment` objects, install [SingleCellExperiment](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html):  
   `BiocManager::install("SingleCellExperiment")`
-- To convert to/from `Seurat` objects, you need to install
-  [SeuratObject](https://cran.r-project.org/package=SeuratObject):  
+- To convert to/from `Seurat` objects, install [SeuratObject](https://cran.r-project.org/package=SeuratObject):  
   `install.packages("SeuratObject")`
+- To read/write \*.zarr files, you need to install
+  [Rarr](https://www.bioconductor.org/packages/release/bioc/html/Rarr.html):  
+  `BiocManager::install("Rarr")`
 
-If you’re feeling adventurous, you can install all suggested
-dependencies at once:
-
-``` r
-devtools::install_github("scverse/anndataR", dependencies = TRUE)
-```
-
-## Example
-
-Here’s a quick example of how to use `{anndataR}`. First, we download an
-h5ad file.
+Alternatively, you can install all suggested dependencies at once:
 
 ``` r
-library(anndataR)
-
-h5ad_path <- system.file("extdata", "example.h5ad", package = "anndataR")
+pak::pak("scverse/anndataR", dependencies = TRUE)
 ```
 
-Read an h5ad file in memory:
+## Getting started
+
+The best way to get started with **{anndataR}** is to explore the package vignettes (available at https://anndataR.scverse.org/articles/).
+
+In order to browse these vignettes locally, you need to build them during installation:
 
 ``` r
-adata <- read_h5ad(h5ad_path)
+options(pkg.build_vignettes = TRUE)
+pak::pak("scverse/anndataR")
 ```
 
-Read an h5ad file on disk:
+Take note that you need all suggested dependencies available, and that building them can take some time.
 
-``` r
-adata <- read_h5ad(h5ad_path, to = "HDF5AnnData")
+- [**Getting started**](https://anndataR.scverse.org/articles/anndataR.html): An introduction to the package and its features.  
+  `vignette("anndataR", package = "anndataR")`
+- [**Read/write `Seurat` objects**](https://anndataR.scverse.org/articles/usage_seurat.html): How to convert between `AnnData` and `Seurat` objects.  
+  `vignette("usage_seurat", package = "anndataR")`
+- [**Read/write `SingleCellExperiment` objects**](https://anndataR.scverse.org/articles/usage_singlecellexperiment.html): How to convert between `AnnData` and `SingleCellExperiment` objects  
+  `vignette("usage_singlecellexperiment", package = "anndataR")`
+- [**Software Design**](https://anndataR.scverse.org/articles/software_design.html): An overview of the design of the package
+- [**Development Status**](https://anndataR.scverse.org/articles/development_status.html): An overview of the development status of the package
+
+## Citing **{anndataR}**
+
+If you use **{anndataR}** in your work, please cite [_"anndataR improves interoperability between R and Python in single-cell transcriptomics"_](https://doi.org/10.1101/2025.08.18.669052):
+
+```r
+citation("anndataR")
 ```
 
-View structure:
+    Deconinck L, Zappia L, Cannoodt R, Morgan M, scverse core, Virshup I, Sang-aram C, Bredikhin D, Seurinck R, Saeys Y (2025).
+    “anndataR improves interoperability between R and Python in single-cell transcriptomics.” _bioRxiv_, 2025.08.18.669052.
+    doi:10.1101/2025.08.18.669052 <https://doi.org/10.1101/2025.08.18.669052>.
 
-``` r
-adata
-#> AnnData object with n_obs × n_vars = 50 × 100
-#>     obs: 'Float', 'FloatNA', 'Int', 'IntNA', 'Bool', 'BoolNA', 'n_genes_by_counts', 'log1p_n_genes_by_counts', 'total_counts', 'log1p_total_counts', 'leiden'
-#>     var: 'String', 'n_cells_by_counts', 'mean_counts', 'log1p_mean_counts', 'pct_dropout_by_counts', 'total_counts', 'log1p_total_counts', 'highly_variable', 'means', 'dispersions', 'dispersions_norm'
-#>     obsm: 'X_pca', 'X_umap'
-#>     varm: 'PCs'
-#>     layers: 'counts', 'csc_counts', 'dense_X', 'dense_counts'
-#>     obsp: 'connectivities', 'distances'
-```
+    A BibTeX entry for LaTeX users is
 
-Access AnnData slots:
-
-``` r
-dim(adata$X)
-#> [1]  50 100
-adata$obs[1:5, 1:6]
-#>         Float FloatNA Int IntNA  Bool BoolNA
-#> Cell000 42.42     NaN   0    NA FALSE  FALSE
-#> Cell001 42.42   42.42   1    42  TRUE     NA
-#> Cell002 42.42   42.42   2    42  TRUE   TRUE
-#> Cell003 42.42   42.42   3    42  TRUE   TRUE
-#> Cell004 42.42   42.42   4    42  TRUE   TRUE
-adata$var[1:5, 1:6]
-#>          String n_cells_by_counts mean_counts log1p_mean_counts pct_dropout_by_counts total_counts
-#> Gene000 String0                44        1.94          1.078410                    12           97
-#> Gene001 String1                42        2.04          1.111858                    16          102
-#> Gene002 String2                43        2.12          1.137833                    14          106
-#> Gene003 String3                41        1.72          1.000632                    18           86
-#> Gene004 String4                42        2.06          1.118415                    16          103
-```
-
-## Interoperability
-
-Convert the AnnData object to a SingleCellExperiment object:
-
-``` r
-sce <- adata$to_SingleCellExperiment()
-sce
-#> class: SingleCellExperiment 
-#> dim: 100 50 
-#> metadata(0):
-#> assays(5): X counts csc_counts dense_X dense_counts
-#> rownames(100): Gene000 Gene001 ... Gene098 Gene099
-#> rowData names(11): String n_cells_by_counts ... dispersions dispersions_norm
-#> colnames(50): Cell000 Cell001 ... Cell048 Cell049
-#> colData names(11): Float FloatNA ... log1p_total_counts leiden
-#> reducedDimNames(0):
-#> mainExpName: NULL
-#> altExpNames(0):
-```
-
-Convert the AnnData object to a Seurat object:
-
-``` r
-obj <- adata$to_Seurat()
-obj
-#> An object of class Seurat 
-#> 500 features across 50 samples within 5 assays 
-#> Active assay: RNA (100 features, 0 variable features)
-#>  2 layers present: counts, data
-#>  4 other assays present: counts, csc_counts, dense_X, dense_counts
-```
-
-## Manually create an object
-
-``` r
-adata <- AnnData(
-  X = matrix(rnorm(100), nrow = 10),
-  obs = data.frame(
-    cell_type = factor(rep(c("A", "B"), each = 5))
-  ),
-  var = data.frame(
-    gene_name = paste0("gene_", 1:10)
-  )
-)
-
-adata
-#> AnnData object with n_obs × n_vars = 10 × 10
-#>     obs: 'cell_type'
-#>     var: 'gene_name'
-```
+      @Article{,
+        title = {{anndataR} improves interoperability between R and Python in single-cell transcriptomics},
+        author = {Louise Deconinck and Luke Zappia and Robrecht Cannoodt and Martin Morgan and {scverse core} and Isaac Virshup and Chananchida Sang-aram and Danila Bredikhin and Ruth Seurinck and Yvan Saeys},
+        journal = {bioRxiv},
+        year = {2025},
+        pages = {2025.08.18.669052},
+        doi = {10.1101/2025.08.18.669052},
+      }

@@ -1,7 +1,10 @@
-skip_if_not_installed("pizzarr")
+skip_if_not_installed("Rarr")
 
-file <- system.file("extdata", "example.zarr", package = "anndataR")
-store <- pizzarr::DirectoryStore$new(file)
+# zarr file
+zarr_dir <- system.file("extdata", "example_v2.zarr.zip", package = "anndataR")
+td <- tempdir(check = TRUE)
+unzip(zarr_dir, exdir = td)
+store <- file.path(td, "example_v2.zarr")
 
 test_that("reading encoding works", {
   encoding <- read_zarr_encoding(store, "obs")
@@ -30,18 +33,25 @@ test_that("reading sparse matrices works", {
   expect_equal(dim(mat), c(50, 100))
 })
 
-
 test_that("reading recarrays works", {
-  f <- function() read_zarr_rec_array(store, "uns/rank_genes_groups/logfoldchanges")
-  expect_error(f())
+  array_list <- read_zarr_rec_array(
+    store,
+    "uns/rank_genes_groups/logfoldchanges"
+  )
+  expect_true(is.list(array_list))
+  for (array in array_list) {
+    expect_true(is.vector(array))
+    expect_type(array, "double")
+    expect_equal(length(array), 6)
+  }
 })
 
 test_that("reading 1D numeric arrays works", {
   array_1d <- read_zarr_dense_array(store, "obs/Int")
-  expect_vector(array_1d, ptype = integer(), size = 50)
+  expect_equal(array_1d, array(0L:49L))
 
   array_1d <- read_zarr_dense_array(store, "obs/Float")
-  expect_vector(array_1d, ptype = double(), size = 50)
+  expect_equal(array_1d, array(rep(42.42, 50)))
 })
 
 test_that("reading 1D sparse numeric arrays works", {
@@ -56,13 +66,9 @@ test_that("reading 1D nullable arrays works", {
   expect_true(any(is.na(array_1d)))
 
   array_1d <- read_zarr_dense_array(store, "obs/FloatNA")
-  expect_vector(array_1d, ptype = double(), size = 50)
-  expect_true(any(is.na(array_1d)))
-
-  # # TODO: non NA booleans dont have mask arrays, should they ?
-  # array_1d <- read_zarr_nullable_boolean(store, "obs/Bool")
-  # expect_vector(array_1d, ptype = logical(), size = 50)
-  # expect_false(any(is.na(array_1d)))
+  expected <- array(rep(42.42, 50))
+  expected[1] <- NA
+  expect_equal(array_1d, expected)
 
   array_1d <- read_zarr_nullable_boolean(store, "obs/BoolNA")
   expect_vector(array_1d, ptype = logical(), size = 50)
@@ -81,8 +87,7 @@ test_that("reading numeric scalars works", {
 
 test_that("reading string arrays works", {
   array <- read_zarr_string_array(store, "uns/String")
-  expect_vector(array, ptype = character(), size = 10)
-  expect_equal(array[3], "String 2")
+  expect_equal(array, array(paste0("String ", 0L:9L)))
 
   array <- read_zarr_string_array(store, "uns/String2D")
   expect_true(is.matrix(array))
@@ -97,14 +102,22 @@ test_that("reading mappings works", {
 })
 
 test_that("reading dataframes works", {
-  df <- read_zarr_data_frame(store, "obs", include_index = TRUE)
+  df <- read_zarr_data_frame(store, "obs")
   expect_s3_class(df, "data.frame")
   expect_equal(
     colnames(df),
     c(
-      "Float", "FloatNA", "Int", "IntNA", "Bool", "BoolNA",
-      "n_genes_by_counts", "log1p_n_genes_by_counts", "total_counts",
-      "log1p_total_counts", "leiden"
+      "Float",
+      "FloatNA",
+      "Int",
+      "IntNA",
+      "Bool",
+      "BoolNA",
+      "n_genes_by_counts",
+      "log1p_n_genes_by_counts",
+      "total_counts",
+      "log1p_total_counts",
+      "leiden"
     )
   )
 })
@@ -112,14 +125,13 @@ test_that("reading dataframes works", {
 test_that("reading Zarr as SingleCellExperiment works", {
   skip_if_not_installed("SingleCellExperiment")
 
-  sce <- read_zarr(store, to = "SingleCellExperiment")
+  sce <- read_zarr(store, as = "SingleCellExperiment")
   expect_s4_class(sce, "SingleCellExperiment")
 })
 
 test_that("reading Zarr as Seurat works", {
   skip_if_not_installed("SeuratObject")
 
-  # TODO: remove this suppression when the to_seurat, from_seurat functions are updated.
-  seurat <- suppressWarnings(read_zarr(store, to = "Seurat"))
+  seurat <- read_zarr(store, as = "Seurat")
   expect_s4_class(seurat, "Seurat")
 })

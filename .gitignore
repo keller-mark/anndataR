@@ -53,6 +53,14 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
-.DS_Store
-.ipynb_checkpoints/
-*.ipynb
+# Benchmark result files
+benchmarks/results_*.txt
+
+# Rproj files
+*.Rproj
+
+# Vignette data files
+vignettes/data/*.h5ad
+/doc/
+/Meta/
+/data/

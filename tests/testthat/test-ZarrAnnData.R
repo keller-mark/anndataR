@@ -1,14 +1,16 @@
-skip_if_not_installed("pizzarr")
+skip_if_not_installed("Rarr")
 
-file <- system.file("extdata", "example.zarr", package = "anndataR")
-store <- pizzarr::DirectoryStore$new(file)
+file <- system.file("extdata", "example_v2.zarr.zip", package = "anndataR")
+td <- tempdir(check = TRUE)
+unzip(file, exdir = td)
+store <- file.path(td, "example_v2.zarr")
 
-test_that("opening H5AD works", {
-  adata <- ZarrAnnData$new(store)
+test_that("opening Zarr works", {
+  adata <- ZarrAnnData$new(store, mode = "r")
   expect_true(inherits(adata, "ZarrAnnData"))
 })
 
-adata <- ZarrAnnData$new(store)
+adata <- ZarrAnnData$new(store, mode = "r")
 
 # GETTERS ----------------------------------------------------------------
 # trackstatus: class=ZarrAnnData, feature=test_get_X, status=done
@@ -46,43 +48,24 @@ test_that("reading varm works", {
   )
 })
 
-test_that("obsm/ varm validation", {
-  N_OBS <- 5
-  N_VAR <- 3
-
-  mtx <- matrix(
-    0,
-    N_OBS,
-    N_VAR
+# trackstatus: class=ZarrAnnData, feature=test_get_obsp, status=done
+test_that("reading obsp works", {
+  obsp <- adata$obsp
+  expect_true(is.list(obsp), "list")
+  expect_equal(
+    names(obsp),
+    c("connectivities", "distances")
   )
-
-  adata <- AnnData(
-    X = mtx,
-    obs = data.frame(row.names = as.character(1:N_OBS)),
-    var = data.frame(row.names = as.character(1:N_VAR))
-  )
-
-  adata$obsm <- list(PCA = matrix(0, N_OBS, 4))
-  adata$varm <- list(PCs = matrix(0, N_VAR, 4))
-
-  expect_error(adata$obsm <- list(PCA = matrix(0, 4, 4)))
-  expect_error(adata$varm <- list(PCs = matrix(0, 4, 4)))
 })
 
-test_that("obsp/ varp validation", {
-  N_OBS <- 5
-  N_VAR <- 3
-
-  adata <- AnnData(
-    obs = data.frame(row.names = as.character(1:N_OBS)),
-    var = data.frame(row.names = as.character(1:N_VAR))
+# trackstatus: class=ZarrAnnData, feature=test_get_varp, status=done
+test_that("reading varp works", {
+  varp <- adata$varp
+  expect_true(is.list(varp), "list")
+  expect_equal(
+    names(varp),
+    c("test_varp")
   )
-
-  adata$obsp <- list(graph1 = matrix(0, N_OBS, N_OBS))
-  adata$varp <- list(graph1 = matrix(0, N_VAR, N_VAR))
-
-  expect_error(adata$obsp <- list(graph1 = matrix(0, 4, 4)))
-  expect_error(adata$varp <- list(graph1 = matrix(0, 4, 4)))
 })
 
 # trackstatus: class=ZarrAnnData, feature=test_get_obs, status=done
@@ -92,8 +75,17 @@ test_that("reading obs works", {
   expect_equal(
     colnames(obs),
     c(
-      "Float", "FloatNA", "Int", "IntNA", "Bool", "BoolNA", "n_genes_by_counts",
-      "log1p_n_genes_by_counts", "total_counts", "log1p_total_counts", "leiden"
+      "Float",
+      "FloatNA",
+      "Int",
+      "IntNA",
+      "Bool",
+      "BoolNA",
+      "n_genes_by_counts",
+      "log1p_n_genes_by_counts",
+      "total_counts",
+      "log1p_total_counts",
+      "leiden"
     )
   )
 })
@@ -105,9 +97,17 @@ test_that("reading var works", {
   expect_equal(
     colnames(var),
     c(
-      "String", "n_cells_by_counts", "mean_counts", "log1p_mean_counts",
-      "pct_dropout_by_counts", "total_counts", "log1p_total_counts",
-      "highly_variable", "means", "dispersions", "dispersions_norm"
+      "String",
+      "n_cells_by_counts",
+      "mean_counts",
+      "log1p_mean_counts",
+      "pct_dropout_by_counts",
+      "total_counts",
+      "log1p_total_counts",
+      "highly_variable",
+      "means",
+      "dispersions",
+      "dispersions_norm"
     )
   )
 })
@@ -126,35 +126,41 @@ test_that("reading var names works", {
 
 # SETTERS ----------------------------------------------------------------
 test_that("creating empty Zarr works", {
-  empty_store <- pizzarr::MemoryStore$new()
+  empty_store <- tempfile(fileext = ".zarr")
   expect_silent(ZarrAnnData$new(empty_store))
+  unlink(empty_store, recursive = TRUE)
 })
 
 # trackstatus: class=ZarrAnnData, feature=test_set_X, status=done
 test_that("writing X works", {
-  store <- pizzarr::MemoryStore$new()
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
 
   X <- matrix(rnorm(10 * 20), nrow = 10, ncol = 20)
   expect_silent(zarr$X <- X)
+  unlink(store, recursive = TRUE)
 })
 
 # trackstatus: class=ZarrAnnData, feature=test_set_layers, status=done
 test_that("writing layers works", {
-  store <- pizzarr::MemoryStore$new()
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
 
   X <- matrix(rnorm(10 * 20), nrow = 10, ncol = 20)
   expect_silent(zarr$layers <- list(layer1 = X, layer2 = X))
+  unlink(store, recursive = TRUE)
 })
 
 # trackstatus: class=ZarrAnnData, feature=test_set_obs, status=done
 test_that("writing obs works", {
-  store <- pizzarr::MemoryStore$new()
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
@@ -166,11 +172,13 @@ test_that("writing obs works", {
   )
   zarr$obs <- obs
   expect_identical(zarr$obs_names, paste0("Row", 1:10))
+  unlink(store, recursive = TRUE)
 })
 
 # trackstatus: class=ZarrAnnData, feature=test_set_var, status=done
 test_that("writing var works", {
-  store <- pizzarr::MemoryStore$new()
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
@@ -182,26 +190,114 @@ test_that("writing var works", {
   )
   zarr$var <- var
   expect_identical(zarr$var_names, paste0("Row", 1:20))
+  unlink(store, recursive = TRUE)
 })
 
 # trackstatus: class=ZarrAnnData, feature=test_set_obs_names, status=done
 test_that("writing obs names works", {
-  store <- pizzarr::MemoryStore$new()
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
 
   zarr$obs_names <- LETTERS[1:10]
   expect_identical(zarr$obs_names, LETTERS[1:10])
+  unlink(store, recursive = TRUE)
 })
 
 # trackstatus: class=ZarrAnnData, feature=test_set_var_names, status=done
 test_that("writing var names works", {
-  store <- pizzarr::MemoryStore$new()
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)
   obs <- data.frame(row.names = 1:10)
   var <- data.frame(row.names = 1:20)
   zarr <- ZarrAnnData$new(store, obs = obs, var = var)
 
   zarr$var_names <- LETTERS[1:20]
   expect_identical(zarr$var_names, LETTERS[1:20])
+  unlink(store, recursive = TRUE)
+})
+
+# trackstatus: class=ZarrAnnData, feature=test_set_obsm, status=done
+test_that("writing obsm works", {
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)
+  obs <- data.frame(row.names = 1:10)
+  var <- data.frame(row.names = 1:20)
+  zarr <- ZarrAnnData$new(store, obs = obs, var = var)
+  obsm_x <- matrix(rnorm(10 * 5), nrow = 10, ncol = 5)
+  zarr$obsm <- list(X = obsm_x)
+  # obsm should now have rownames added on-the-fly
+  expected_obsm_x <- obsm_x
+  rownames(expected_obsm_x) <- zarr$obs_names
+  expect_identical(zarr$obsm$X, expected_obsm_x)
+})
+
+# trackstatus: class=ZarrAnnData, feature=test_set_varm, status=done
+test_that("writing varm works", {
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)
+  obs <- data.frame(row.names = 1:10)
+  var <- data.frame(row.names = 1:20)
+  zarr <- ZarrAnnData$new(store, obs = obs, var = var)
+
+  varm_x <- matrix(rnorm(20 * 5), nrow = 20, ncol = 5)
+  zarr$varm <- list(PCs = varm_x)
+  # varm should now have rownames added on-the-fly
+  expected_varm_x <- varm_x
+  rownames(expected_varm_x) <- zarr$var_names
+  expect_identical(zarr$varm$PCs, expected_varm_x)
+})
+
+# trackstatus: class=ZarrAnnData, feature=test_set_obsp, status=done
+test_that("writing obsp works", {
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)
+  obs <- data.frame(row.names = 1:10)
+  var <- data.frame(row.names = 1:20)
+  zarr <- ZarrAnnData$new(store, obs = obs, var = var)
+
+  obsp_x <- matrix(rnorm(10 * 10), nrow = 10, ncol = 10)
+  zarr$obsp <- list(connectivities = obsp_x)
+  # obsp should now have dimnames added on-the-fly
+  expected_obsp_x <- obsp_x
+  dimnames(expected_obsp_x) <- list(zarr$obs_names, zarr$obs_names)
+  expect_identical(zarr$obsp$connectivities, expected_obsp_x)
+})
+
+# trackstatus: class=ZarrAnnData, feature=test_set_varp, status=done
+test_that("writing varp works", {
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)
+  obs <- data.frame(row.names = 1:10)
+  var <- data.frame(row.names = 1:20)
+  zarr <- ZarrAnnData$new(store, obs = obs, var = var)
+  varp_x <- matrix(rnorm(20 * 20), nrow = 20, ncol = 20)
+  zarr$varp <- list(connectivities = varp_x)
+  # varp should now have dimnames added on-the-fly
+  expected_varp_x <- varp_x
+  dimnames(expected_varp_x) <- list(zarr$var_names, zarr$var_names)
+  expect_identical(zarr$varp$connectivities, expected_varp_x)
+})
+
+# trackstatus: class=ZarrAnnData, feature=test_set_uns, status=done
+test_that("writing uns works", {
+  store <- tempfile(fileext = ".zarr")
+  create_zarr(store = store)
+  obs <- data.frame(row.names = 1:10)
+  var <- data.frame(row.names = 1:20)
+  zarr <- ZarrAnnData$new(store, obs = obs, var = var)
+  zarr$uns <- list(
+    foo = "bar",
+    baz = c(1, 2, 3),
+    nested = list(
+      nested_foo = "nested_bar",
+      nested_baz = c(4L, 5L, 6L)
+    )
+  )
+  expect_identical(zarr$uns$foo, "bar")
+  expect_equal(zarr$uns$baz, c(1, 2, 3), ignore_attr = TRUE)
+  expect_identical(zarr$uns$nested$nested_foo, "nested_bar")
+  expect_equal(zarr$uns$nested$nested_baz, c(4L, 5L, 6L), ignore_attr = TRUE)
 })

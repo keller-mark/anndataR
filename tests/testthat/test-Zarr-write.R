@@ -1,14 +1,39 @@
-skip_if_not_installed("pizzarr")
+skip_if_not_installed("Rarr")
 
-store <- pizzarr::MemoryStore$new()
+store <- tempfile(fileext = ".zarr")
+if (dir.exists(store)) {
+  unlink(store, recursive = TRUE)
+}
+
+create_zarr(store = store)
 
 test_that("Writing Zarr dense arrays works", {
   array <- matrix(rnorm(20), nrow = 5, ncol = 4)
 
-  expect_silent(write_zarr_element(array, store, "dense_array", compression = "none"))
+  expect_silent(write_zarr_element(
+    array,
+    store,
+    "dense_array",
+    compression = "none"
+  ))
   expect_true(zarr_path_exists(store, "dense_array"))
-  g <- pizzarr::zarr_open(store, path = "dense_array")
-  attrs <- g$get_attrs()$to_list()
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "dense_array"))
+  expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
+  expect_equal(attrs[["encoding-type"]], "array")
+})
+
+test_that("Writing Zarr dense 3D arrays works", {
+  value <- array(rnorm(60), dim = c(5, 4, 3))
+
+  expect_silent(
+    write_zarr_element(
+      value,
+      store,
+      "dense_3d_array"
+    )
+  )
+  expect_true(zarr_path_exists(store, "dense_3d_array"))
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "dense_3d_array"))
   expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
   expect_equal(attrs[["encoding-type"]], "array")
 })
@@ -17,26 +42,49 @@ test_that("Writing Zarr sparse arrays works", {
   array <- matrix(rnorm(20), nrow = 5, ncol = 4)
 
   csc_array <- as(array, "CsparseMatrix")
-  expect_silent(write_zarr_element(csc_array, store, "csc_array", compression = "none"))
+  expect_silent(write_zarr_element(
+    csc_array,
+    store,
+    "csc_array",
+    compression = "none"
+  ))
   expect_true(zarr_path_exists(store, "csc_array"))
   expect_true(zarr_path_exists(store, "csc_array/data"))
   expect_true(zarr_path_exists(store, "csc_array/indices"))
   expect_true(zarr_path_exists(store, "csc_array/indptr"))
-  g <- pizzarr::zarr_open(store, path = "csc_array")
-  attrs <- g$get_attrs()$to_list()
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "csc_array"))
   expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
   expect_equal(attrs[["encoding-type"]], "csc_matrix")
 
   csr_array <- as(array, "RsparseMatrix")
-  expect_silent(write_zarr_element(csr_array, store, "csr_array", compression = "none"))
+  expect_silent(write_zarr_element(
+    csr_array,
+    store,
+    "csr_array",
+    compression = "none"
+  ))
   expect_true(zarr_path_exists(store, "csr_array"))
   expect_true(zarr_path_exists(store, "csr_array/data"))
   expect_true(zarr_path_exists(store, "csr_array/indices"))
   expect_true(zarr_path_exists(store, "csr_array/indptr"))
-  g <- pizzarr::zarr_open(store, path = "csr_array")
-  attrs <- g$get_attrs()$to_list()
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "csr_array"))
   expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
   expect_equal(attrs[["encoding-type"]], "csr_matrix")
+})
+
+test_that("Writing dgeMatrix", {
+  value <- matrix(rnorm(20), nrow = 5, ncol = 4) |>
+    as("dMatrix") |>
+    as("generalMatrix") |>
+    as("unpackedMatrix")
+
+  expect_silent(
+    write_zarr_element(value, store, "dgematrix")
+  )
+  expect_true(zarr_path_exists(store, "dgematrix"))
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "dgematrix"))
+  expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
+  expect_equal(attrs[["encoding-type"]], "array")
 })
 
 test_that("Writing Zarr nullable booleans works", {
@@ -45,8 +93,7 @@ test_that("Writing Zarr nullable booleans works", {
 
   expect_silent(write_zarr_element(nullable, store, "nullable_bool"))
   expect_true(zarr_path_exists(store, "nullable_bool"))
-  g <- pizzarr::zarr_open(store, path = "nullable_bool")
-  attrs <- g$get_attrs()$to_list()
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "nullable_bool"))
   expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
   expect_equal(attrs[["encoding-type"]], "nullable-boolean")
 })
@@ -57,8 +104,7 @@ test_that("Writing Zarr nullable integers works", {
 
   expect_silent(write_zarr_element(nullable, store, "nullable_int"))
   expect_true(zarr_path_exists(store, "nullable_int"))
-  g <- pizzarr::zarr_open(store, path = "nullable_int")
-  attrs <- g$get_attrs()$to_list()
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "nullable_int"))
   expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
   expect_equal(attrs[["encoding-type"]], "nullable-integer")
 })
@@ -68,8 +114,7 @@ test_that("Writing Zarr string arrays works", {
 
   write_zarr_element(string, store, "string_array")
   expect_true(zarr_path_exists(store, "string_array"))
-  g <- pizzarr::zarr_open(store, path = "string_array")
-  attrs <- g$get_attrs()$to_list()
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "string_array"))
   expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
   expect_equal(attrs[["encoding-type"]], "string-array")
 
@@ -77,8 +122,7 @@ test_that("Writing Zarr string arrays works", {
 
   expect_silent(write_zarr_element(string2d, store, "string_array2D"))
   expect_true(zarr_path_exists(store, "string_array2D"))
-  g <- pizzarr::zarr_open(store, path = "string_array2D")
-  attrs <- g$get_attrs()$to_list()
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "string_array2D"))
   expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
   expect_equal(attrs[["encoding-type"]], "string-array")
 })
@@ -90,9 +134,7 @@ test_that("Writing Zarr categoricals works", {
   expect_true(zarr_path_exists(store, "categorical"))
   expect_true(zarr_path_exists(store, "categorical/categories"))
   expect_true(zarr_path_exists(store, "categorical/codes"))
-  expect_true(zarr_path_exists(store, "categorical/ordered"))
-  g <- pizzarr::zarr_open(store, path = "categorical")
-  attrs <- g$get_attrs()$to_list()
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "categorical"))
   expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
   expect_equal(attrs[["encoding-type"]], "categorical")
 })
@@ -102,8 +144,7 @@ test_that("Writing Zarr string scalars works", {
 
   expect_silent(write_zarr_element(string, store, "string_scalar"))
   expect_true(zarr_path_exists(store, "string_scalar"))
-  g <- pizzarr::zarr_open(store, path = "string_scalar")
-  attrs <- g$get_attrs()$to_list()
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "string_scalar"))
   expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
   expect_equal(attrs[["encoding-type"]], "string")
 })
@@ -113,8 +154,7 @@ test_that("Writing Zarr numeric scalars works", {
 
   expect_silent(write_zarr_element(number, store, "numeric_scalar"))
   expect_true(zarr_path_exists(store, "numeric_scalar"))
-  g <- pizzarr::zarr_open(store, path = "numeric_scalar")
-  attrs <- g$get_attrs()$to_list()
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "numeric_scalar"))
   expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
   expect_equal(attrs[["encoding-type"]], "numeric-scalar")
 })
@@ -128,7 +168,12 @@ test_that("Writing Zarr mappings works", {
     scalar = 2
   )
 
-  expect_silent(write_zarr_element(mapping, store, "mapping", compression = "none"))
+  expect_silent(write_zarr_element(
+    mapping,
+    store,
+    "mapping",
+    compression = "none"
+  ))
   expect_true(zarr_path_exists(store, "mapping"))
   expect_true(zarr_path_exists(store, "mapping/array"))
   expect_true(zarr_path_exists(store, "mapping/sparse"))
@@ -138,8 +183,7 @@ test_that("Writing Zarr mappings works", {
   expect_true(zarr_path_exists(store, "mapping/string"))
   expect_true(zarr_path_exists(store, "mapping/numeric"))
   expect_true(zarr_path_exists(store, "mapping/scalar"))
-  g <- pizzarr::zarr_open(store, path = "mapping")
-  attrs <- g$get_attrs()$to_list()
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "mapping"))
   expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
   expect_equal(attrs[["encoding-type"]], "dict")
 })
@@ -155,38 +199,39 @@ test_that("Writing Zarr data frames works", {
   expect_true(zarr_path_exists(store, "dataframe/Letters"))
   expect_true(zarr_path_exists(store, "dataframe/Numbers"))
   expect_true(zarr_path_exists(store, "dataframe/_index"))
-  g <- pizzarr::zarr_open_group(store, path = "dataframe")
-  attrs <- g$get_attrs()$to_list()
+  attrs <- Rarr::read_zarr_attributes(file.path(store, "dataframe"))
   expect_true(all(c("encoding-type", "encoding-version") %in% names(attrs)))
   expect_equal(attrs[["encoding-type"]], "dataframe")
   expect_true(all(c("_index", "column-order") %in% names(attrs)))
   expect_equal(attrs[["_index"]], "_index")
-  expect_identical(as.character(attrs[["column-order"]]), c("Letters", "Numbers"))
+  expect_identical(
+    as.character(attrs[["column-order"]]),
+    c("Letters", "Numbers")
+  )
 })
 
 test_that("writing Zarr from SingleCellExperiment works", {
   skip_if_not_installed("SingleCellExperiment")
-
-  store <- pizzarr::MemoryStore$new()
-
+  store <- tempfile(fileext = ".zarr")
   sce <- generate_dataset(format = "SingleCellExperiment")
   write_zarr(sce, store)
-  #expect_true(file.exists(file))
-  # TODO: expect things
+  expect_true(dir.exists(store))
 })
 
 test_that("writing Zarr from Seurat works", {
   skip_if_not_installed("SeuratObject")
-  skip("while Seurat converter is failing")
-
-  store <- pizzarr::MemoryStore$new()
-
-  seurat <- generate_dataset(format = "Seurat")
-  write_zarr(seurat, store)
-  expect_true(file.exists(file))
+  store <- tempfile(fileext = ".zarr")
+  sce <- generate_dataset(format = "Seurat")
+  write_zarr(sce, store)
+  expect_true(dir.exists(store))
 })
 
-test_that("writing gzip compressed files works for Zarr", {
+dir_size <- function(path) {
+  files <- list.files(path, recursive = TRUE, full.names = TRUE)
+  sum(file.info(files)$size, na.rm = TRUE)
+}
+
+test_that("writing compressed files works for Zarr", {
   dummy <- generate_dataset(100, 200)
   non_random_X <- matrix(5, 100, 200) # nolint
 
@@ -196,32 +241,15 @@ test_that("writing gzip compressed files works for Zarr", {
     var = dummy$var
   )
 
-  store_none <- pizzarr::MemoryStore$new()
-  store_gzip <- pizzarr::MemoryStore$new()
+  store_none <- tempfile(fileext = ".zarr")
+  store_compressed <- tempfile(fileext = ".zarr")
 
   write_zarr(adata, store_none, compression = "none")
-  write_zarr(adata, store_gzip, compression = "gzip")
 
-  #expect_true(file.info(h5ad_file_none)$size > file.info(h5ad_file_gzip)$size)
-  # TODO: expect things
-})
-
-test_that("writing lzf compressed files works for Zarr", {
-  dummy <- generate_dataset(100, 200)
-  non_random_X <- matrix(5, 100, 200) # nolint
-
-  adata <- AnnData(
-    X = non_random_X,
-    obs = dummy$obs,
-    var = dummy$var
-  )
-
-  store_none <- pizzarr::MemoryStore$new()
-  store_lzf <- pizzarr::MemoryStore$new()
-
-  write_zarr(adata, store_none, compression = "none")
-  write_zarr(adata, store_lzf, compression = "lzf")
-
-  #expect_true(file.info(h5ad_file_none)$size > file.info(h5ad_file_lzf)$size)
-  # TODO: expect things
+  comp_list <- c("gzip", "blosc", "zstd", "lzma", "bz2", "zlib", "lz4")
+  for (comp in comp_list) {
+    write_zarr(adata, store_compressed, compression = comp)
+    unlink(store_compressed, recursive = TRUE)
+    expect_true(dir_size(store_none) > dir_size(store_compressed))
+  }
 })

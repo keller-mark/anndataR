@@ -8,32 +8,59 @@ write_h5ad(
   object,
   path,
   compression = c("none", "gzip", "lzf"),
-  mode = c("w-", "r", "r+", "a", "w", "x")
+  chunk_size = "auto",
+  mode = c("w-", "r", "r+", "a", "w", "x"),
+  ...
 )
 }
 \arguments{
-\item{object}{The object to write, either a "SingleCellExperiment" or a
-"Seurat" object}
+\item{object}{The object to write, either a
+\code{\link[SingleCellExperiment:SingleCellExperiment]{SingleCellExperiment::SingleCellExperiment}} or a
+\code{\link[SeuratObject:Seurat-class]{SeuratObject::Seurat}} object}
 
 \item{path}{Path of the file to write to}
 
-\item{compression}{The compression algorithm to use when writing the
-HDF5 file. Can be one of \code{"none"}, \code{"gzip"} or \code{"lzf"}. Defaults to
-\code{"none"}.}
+\item{compression}{The compression algorithm to use when writing the HDF5
+file. Can be one of \code{"none"}, \code{"gzip"} or \code{"lzf"}. Defaults to \code{"none"}.}
+
+\item{chunk_size}{The target chunk size in bytes to use when writing HDF5
+datasets. When \code{"auto"} (default), the chunk size is determined
+automatically using an algorithm that mimics h5py's auto-chunking
+behaviour. Set to \code{NULL} to disable chunking (contiguous storage,
+the rhdf5 default), or a number to use a specific target size in bytes.
+This only affects array-like datasets; scalar values are unaffected.}
 
 \item{mode}{The mode to open the HDF5 file.
 \itemize{
-\item \code{a} creates a new file or opens an existing one for read/write.
-\item \verb{r+} opens an existing file for read/write.
+\item \code{a} creates a new file or opens an existing one for read/write
+\item \verb{r+} opens an existing file for read/write
 \item \code{w} creates a file, truncating any existing ones
-\item \verb{w-}/\code{x} are synonyms creating a file and failing if it already exists.
+\item \verb{w-}/\code{x} are synonyms creating a file and failing if it already exists
 }}
+
+\item{...}{Additional arguments passed to \code{\link[=as_AnnData]{as_AnnData()}}}
 }
 \value{
 \code{path} invisibly
 }
 \description{
 Write an H5AD file
+}
+\details{
+\subsection{Compression}{
+
+Compression is currently not supported for Boolean arrays, they will be
+written uncompressed.
+}
+
+\subsection{\code{NULL} values}{
+
+For compatibility with changes in Python \strong{anndata} 0.12.0, \code{NULL} values
+in \code{uns} are written to H5AD files as a \code{NULL} dataset (instead of not being
+written at all). To disable this behaviour, set
+\code{option(anndataR.write_null = FALSE)}. This may be required to allow the file
+to be read by older versions of Python \strong{anndata}.
+}
 }
 \examples{
 adata <- AnnData(
@@ -46,7 +73,7 @@ adata <- AnnData(
   var = data.frame(row.names = letters[1:5], gene = 1:5)
 )
 h5ad_file <- tempfile(fileext = ".h5ad")
-write_h5ad(adata, h5ad_file)
+adata$write_h5ad(h5ad_file)
 
 # Write a SingleCellExperiment as an H5AD
 if (requireNamespace("SingleCellExperiment", quietly = TRUE)) {
@@ -62,30 +89,33 @@ if (requireNamespace("SingleCellExperiment", quietly = TRUE)) {
     reducedDims = list(PCA = pca, tSNE = tsne)
   )
 
+  adata <- as_AnnData(sce)
   h5ad_file <- tempfile(fileext = ".h5ad")
-  write_h5ad(sce, h5ad_file)
+  adata$write_h5ad(h5ad_file)
 }
 
 # Write a Seurat as a H5AD
-if (requireNamespace("SeuratObject", quietly = TRUE)) {
-  # TODO: uncomment this code when the seurat converter is fixed
-  # counts <- matrix(1:15, 3L, 5L)
-  # dimnames(counts) <- list(
-  #   letters[1:3],
-  #   LETTERS[1:5]
-  # )
-  # gene.metadata <- data.frame(
-  #   row.names = LETTERS[1:5],
-  #   gene = 1:5
-  # )
-  # obj <- SeuratObject::CreateSeuratObject(counts, meta.data = gene.metadata)
-  # cell.metadata <- data.frame(
-  #   row.names = letters[1:3],
-  #   cell = 1:3
-  # )
-  # obj <- SeuratObject::AddMetaData(obj, cell.metadata)
-  #
-  # h5ad_file <- tempfile(fileext = ".h5ad")
-  # write_h5ad(obj, h5ad_file)
+if (requireNamespace("Seurat", quietly = TRUE)) {
+  library(Seurat)
+
+  counts <- matrix(1:15, 5L, 3L)
+  dimnames(counts) <- list(
+    LETTERS[1:5],
+    letters[1:3]
+  )
+  cell.metadata <- data.frame(
+    row.names = letters[1:3],
+    cell = 1:3
+  )
+  obj <- CreateSeuratObject(counts, meta.data = cell.metadata)
+  gene.metadata <- data.frame(
+    row.names = LETTERS[1:5],
+    gene = 1:5
+  )
+  obj[["RNA"]] <- AddMetaData(GetAssay(obj), gene.metadata)
+
+  adata <- as_AnnData(obj)
+  h5ad_file <- tempfile(fileext = ".h5ad")
+  adata$write_h5ad(h5ad_file)
 }
 }

@@ -1,460 +1,501 @@
 #' @title ZarrAnnData
 #'
 #' @description
-#' Implementation of an in memory AnnData object.
-#' @noRd
-ZarrAnnData <- R6::R6Class("ZarrAnnData", # nolint
+#' Implementation of a Zarr-backed `AnnData` object. This class provides an
+#' interface to a Zarr file and minimal data is stored in memory until it is
+#' requested by the user. It is primarily designed as an intermediate object
+#' when reading/writing Zarr files but can be useful for accessing parts of
+#' large files.
+#'
+#' See [AnnData-usage] for details on creating and using `AnnData` objects.
+#'
+#' @return An `ZarrAnnData` object
+#'
+#' @seealso [AnnData-usage] for details on creating and using `AnnData` objects
+#'
+#' @family AnnData classes
+ZarrAnnData <- R6::R6Class(
+  "ZarrAnnData", # nolint
   inherit = AbstractAnnData,
+  cloneable = FALSE,
   private = list(
-    zarr_store = NULL,
-    zarr_root = NULL,
-    # .n_obs = NULL,
-    # .n_vars = NULL,
-    # .obs_names = NULL,
-    # .var_names = NULL,
-    .compression = NULL
+    .zarrobj = NULL,
+    .compression = NULL,
+
+    .check_file_valid = function() {
+      if (!zarr_path_exists(private$.zarrobj, "/")) {
+        cli_abort(
+          paste(
+            "The Zarr file does not exist, or not a zarr file/store!"
+          )
+        )
+      }
+    }
   ),
   active = list(
-    #' @field X The X slot
+    #' @field X See [AnnData-usage]
     X = function(value) {
+      private$.check_file_valid()
+
       if (missing(value)) {
-        # trackstatus: class=HDF5AnnData, feature=get_X, status=done
-        read_zarr_element(private$zarr_store, "/X")
+        # trackstatus: class=ZarrAnnData, feature=get_X, status=done
+        read_zarr_element(private$.zarrobj, "X") |>
+          private$.add_matrix_dimnames("X")
       } else {
-        # trackstatus: class=HDF5AnnData, feature=set_X, status=done
-        value <- private$.validate_aligned_array(
+        # trackstatus: class=ZarrAnnData, feature=set_X, status=done
+        private$.validate_aligned_array(
           value,
           "X",
           shape = c(self$n_obs(), self$n_vars()),
-          expected_rownames = rownames(self),
-          expected_colnames = colnames(self)
-        )
-        write_zarr_element(value, private$zarr_store, "/X", private$.compression)
+          expected_rownames = self$obs_names,
+          expected_colnames = self$var_names
+        ) |>
+          write_zarr_element(
+            private$.zarrobj,
+            "X",
+            private$.compression
+          )
       }
     },
-    #' @field layers The layers slot. Must be NULL or a named list
-    #'   with with all elements having the dimensions consistent with
-    #'   `obs` and `var`.
+    #' @field layers See [AnnData-usage]
     layers = function(value) {
+      private$.check_file_valid()
+
       if (missing(value)) {
-        # trackstatus: class=HDF5AnnData, feature=get_layers, status=done
-        read_zarr_element(private$zarr_store, "layers")
+        # trackstatus: class=ZarrAnnData, feature=get_layers, status=done
+        read_zarr_element(private$.zarrobj, "layers") |>
+          private$.add_mapping_dimnames("layers")
       } else {
-        # trackstatus: class=HDF5AnnData, feature=set_layers, status=done
-        value <- private$.validate_aligned_mapping(
+        # trackstatus: class=ZarrAnnData, feature=set_layers, status=done
+        private$.validate_aligned_mapping(
           value,
           "layers",
           c(self$n_obs(), self$n_vars()),
-          expected_rownames = rownames(self),
-          expected_colnames = colnames(self)
-        )
-        write_zarr_element(value, private$zarr_store, "/layers", private$.compression)
+          expected_rownames = self$obs_names,
+          expected_colnames = self$var_names
+        ) |>
+          write_zarr_element(
+            private$.zarrobj,
+            "layers",
+            private$.compression
+          )
       }
     },
-    #' @field obsm The obsm slot. Must be `NULL` or a named list with
-    #'   with all elements having the same number of rows as `obs`.
+    #' @field obsm See [AnnData-usage]
     obsm = function(value) {
+      private$.check_file_valid()
+
       if (missing(value)) {
-        # trackstatus: class=HDF5AnnData, feature=get_obsm, status=done
-        read_zarr_element(private$zarr_store, "obsm")
+        # trackstatus: class=ZarrAnnData, feature=get_obsm, status=done
+        read_zarr_element(private$.zarrobj, "obsm") |>
+          private$.add_mapping_dimnames("obsm")
       } else {
-        # trackstatus: class=HDF5AnnData, feature=set_obsm, status=done
-        value <- private$.validate_aligned_mapping(
+        # trackstatus: class=ZarrAnnData, feature=set_obsm, status=done
+        private$.validate_aligned_mapping(
           value,
           "obsm",
           c(self$n_obs()),
-          expected_rownames = rownames(self)
-        )
-        write_zarr_element(value, private$zarr_store, "/obsm")
+          expected_rownames = self$obs_names,
+          strip_rownames = TRUE,
+          strip_colnames = FALSE
+        ) |>
+          write_zarr_element(
+            private$.zarrobj,
+            "obsm",
+            private$.compression
+          )
       }
     },
-    #' @field varm The varm slot. Must be `NULL` or a named list with
-    #'   with all elements having the same number of rows as `var`.
+    #' @field varm See [AnnData-usage]
     varm = function(value) {
+      private$.check_file_valid()
+
       if (missing(value)) {
-        # trackstatus: class=HDF5AnnData, feature=get_varm, status=done
-        read_zarr_element(private$zarr_store, "varm")
+        # trackstatus: class=ZarrAnnData, feature=get_varm, status=done
+        read_zarr_element(private$.zarrobj, "varm") |>
+          private$.add_mapping_dimnames("varm")
       } else {
-        # trackstatus: class=HDF5AnnData, feature=set_varm, status=done
-        value <- private$.validate_aligned_mapping(
+        # trackstatus: class=ZarrAnnData, feature=set_varm, status=done
+        private$.validate_aligned_mapping(
           value,
           "varm",
           c(self$n_vars()),
-          expected_rownames = colnames(self)
-        )
-        write_zarr_element(value, private$zarr_store, "/varm")
+          expected_rownames = self$var_names,
+          strip_rownames = TRUE,
+          strip_colnames = FALSE
+        ) |>
+          write_zarr_element(
+            private$.zarrobj,
+            "varm",
+            private$.compression
+          )
       }
     },
-    #' @field obsp The obsp slot. Must be `NULL` or a named list with
-    #'   with all elements having the same number of rows and columns as `obs`.
+    #' @field obsp See [AnnData-usage]
     obsp = function(value) {
+      private$.check_file_valid()
+
       if (missing(value)) {
-        # trackstatus: class=HDF5AnnData, feature=get_obsp, status=done
-        read_zarr_element(private$zarr_store, "obsp")
+        # trackstatus: class=ZarrAnnData, feature=get_obsp, status=done
+        read_zarr_element(private$.zarrobj, "obsp") |>
+          private$.add_mapping_dimnames("obsp")
       } else {
-        # trackstatus: class=HDF5AnnData, feature=set_obsp, status=done
-        value <- private$.validate_aligned_mapping(
+        # trackstatus: class=ZarrAnnData, feature=set_obsp, status=done
+        private$.validate_aligned_mapping(
           value,
           "obsp",
           c(self$n_obs(), self$n_obs()),
-          expected_rownames = rownames(self),
-          expected_colnames = rownames(self)
-        )
-        write_zarr_element(value, private$zarr_store, "/obsp")
+          expected_rownames = self$obs_names,
+          expected_colnames = self$obs_names
+        ) |>
+          write_zarr_element(
+            private$.zarrobj,
+            "obsp",
+            private$.compression
+          )
       }
     },
-    #' @field varp The varp slot. Must be `NULL` or a named list with
-    #'   with all elements having the same number of rows and columns as `var`.
+    #' @field varp See [AnnData-usage]
     varp = function(value) {
+      private$.check_file_valid()
+
       if (missing(value)) {
-        # trackstatus: class=HDF5AnnData, feature=get_varp, status=done
-        read_zarr_element(private$zarr_store, "varp")
+        # trackstatus: class=ZarrAnnData, feature=get_varp, status=done
+        read_zarr_element(private$.zarrobj, "varp") |>
+          private$.add_mapping_dimnames("varp")
       } else {
-        # trackstatus: class=HDF5AnnData, feature=set_varp, status=done
-        value <- private$.validate_aligned_mapping(
+        # trackstatus: class=ZarrAnnData, feature=set_varp, status=done
+        private$.validate_aligned_mapping(
           value,
           "varp",
           c(self$n_vars(), self$n_vars()),
-          expected_rownames = colnames(self),
-          expected_colnames = colnames(self)
-        )
-        write_zarr_element(value, private$zarr_store, "/varp")
+          expected_rownames = self$var_names,
+          expected_colnames = self$var_names
+        ) |>
+          write_zarr_element(
+            private$.zarrobj,
+            "varp",
+            private$.compression
+          )
       }
     },
-
-    #' @field obs The obs slot
+    #' @field obs See [AnnData-usage]
     obs = function(value) {
+      private$.check_file_valid()
+
       if (missing(value)) {
-        # trackstatus: class=HDF5AnnData, feature=get_obs, status=done
-        # TODO: shall we keep include_index = TRUE, or get rid of the argument ?
-        read_zarr_element(private$zarr_store, "/obs", include_index = TRUE)
+        # trackstatus: class=ZarrAnnData, feature=get_obs, status=done
+        read_zarr_element(private$.zarrobj, "obs")
       } else {
-        # trackstatus: class=HDF5AnnData, feature=set_obs, status=done
-        value <- private$.validate_obsvar_dataframe(value, "obs")
-        write_zarr_element(
-          value,
-          private$zarr_store,
-          "/obs",
-          private$.compression
-        )
+        # trackstatus: class=ZarrAnnData, feature=set_obs, status=done
+        private$.validate_obsvar_dataframe(value, "obs") |>
+          write_zarr_element(
+            private$.zarrobj,
+            "obs",
+            private$.compression
+          )
       }
     },
-    #' @field var The var slot
+    #' @field var See [AnnData-usage]
     var = function(value) {
+      private$.check_file_valid()
+
       if (missing(value)) {
-        # trackstatus: class=HDF5AnnData, feature=get_var, status=done
-        # TODO: shall we keep include_index = TRUE, or get rid of the argument ?
-        read_zarr_element(private$zarr_store, "/var", include_index = TRUE)
+        # trackstatus: class=ZarrAnnData, feature=get_var, status=done
+        read_zarr_element(private$.zarrobj, "var")
       } else {
-        # trackstatus: class=HDF5AnnData, feature=set_var, status=done
-        value <- private$.validate_obsvar_dataframe(value, "var")
-        write_zarr_element(
-          value,
-          private$zarr_store,
-          "/var"
-        )
+        # trackstatus: class=ZarrAnnData, feature=set_var, status=done
+        private$.validate_obsvar_dataframe(value, "var") |>
+          write_zarr_element(
+            private$.zarrobj,
+            "var",
+            private$.compression
+          )
       }
     },
-    #' @field obs_names Names of observations
+    #' @field obs_names See [AnnData-usage]
     obs_names = function(value) {
+      private$.check_file_valid()
+
       if (missing(value)) {
-        # trackstatus: class=HDF5AnnData, feature=get_obs_names, status=done
+        # trackstatus: class=ZarrAnnData, feature=get_obs_names, status=done
         rownames(self$obs)
       } else {
-        # trackstatus: class=HDF5AnnData, feature=set_obs_names, status=done
+        # trackstatus: class=ZarrAnnData, feature=set_obs_names, status=done
         rownames(self$obs) <- value
       }
     },
-    #' @field var_names Names of variables
+    #' @field var_names See [AnnData-usage]
     var_names = function(value) {
+      private$.check_file_valid()
+
       if (missing(value)) {
-        # trackstatus: class=HDF5AnnData, feature=get_var_names, status=done
+        # trackstatus: class=ZarrAnnData, feature=get_var_names, status=done
         rownames(self$var)
       } else {
-        # trackstatus: class=HDF5AnnData, feature=set_var_names, status=done
+        # trackstatus: class=ZarrAnnData, feature=set_var_names, status=done
         rownames(self$var) <- value
       }
     },
-    #' @field uns The uns slot. Must be `NULL` or a named list.
+    #' @field uns See [AnnData-usage]
     uns = function(value) {
+      private$.check_file_valid()
+
       if (missing(value)) {
-        # trackstatus: class=HDF5AnnData, feature=get_uns, status=done
-        read_zarr_element(private$zarr_store, "uns")
+        # trackstatus: class=ZarrAnnData, feature=get_uns, status=done
+        read_zarr_element(private$.zarrobj, "uns")
       } else {
-        # trackstatus: class=HDF5AnnData, feature=set_uns, status=done
-        value <- private$.validate_named_list(value, "uns")
-        write_zarr_element(value, private$zarr_store, "/uns")
+        # trackstatus: class=ZarrAnnData, feature=set_uns, status=done
+        private$.validate_named_list(value, "uns") |>
+          write_zarr_element(
+            private$.zarrobj,
+            "uns",
+            private$.compression
+          )
       }
     }
   ),
   public = list(
-    #' @description HDF5AnnData constructor
+    #' @description
+    #' `ZarrAnnData` constructor
     #'
-    #' @param file The filename (character) of the `.h5ad` file. If this
-    #'   file does not exist yet, `obs_names` and `var_names` must be provided.
-    #' @param obs_names A vector of unique identifiers
-    #'   used to identify each row of `obs` and to act as an index into the
-    #'   observation dimension of the AnnData object. The length of `obs_names`
-    #'   defines the observation dimension of the AnnData object.
-    #' @param var_names A vector of unique identifiers used to identify each row
-    #'   of `var` and to act as an index into the variable dimension of the
-    #'   AnnData object. The length of `var_names` defines the variable
-    #'   dimension of the AnnData object.
-    #' @param X Either `NULL` or a observation × variable matrix with
-    #'   dimensions consistent with `obs` and `var`.
-    #' @param layers Either `NULL` or a named list, where each element is an
-    #'   observation × variable matrix with dimensions consistent with `obs` and
-    #'   `var`.
-    #' @param obs Either `NULL` or a `data.frame` with columns containing
-    #'   information about observations. If `NULL`, an `n_obs`×0 data frame will
-    #'   automatically be generated.
-    #' @param var Either `NULL` or a `data.frame` with columns containing
-    #'   information about variables. If `NULL`, an `n_vars`×0 data frame will
-    #'   automatically be generated.
-    #' @param obsm The obsm slot is used to store multi-dimensional annotation
-    #'   arrays. It must be either `NULL` or a named list, where each element is a
-    #'   matrix with `n_obs` rows and an arbitrary number of columns.
-    #' @param varm The varm slot is used to store multi-dimensional annotation
-    #'   arrays. It must be either `NULL` or a named list, where each element is a
-    #'   matrix with `n_vars` rows and an arbitrary number of columns.
-    #' @param obsp The obsp slot is used to store sparse multi-dimensional
-    #'   annotation arrays. It must be either `NULL` or a named list, where each
-    #'   element is a sparse matrix where each dimension has length `n_obs`.
-    #' @param varp The varp slot is used to store sparse multi-dimensional
-    #'   annotation arrays. It must be either `NULL` or a named list, where each
-    #'   element is a sparse matrix where each dimension has length `n_vars`.
-    #' @param uns The uns slot is used to store unstructured annotation. It must
-    #'   be either `NULL` or a named list.
-    #' @param compression The compression algorithm to use when writing the
-    #'  HDF5 file. Can be one of `"none"`, `"gzip"` or `"lzf"`. Defaults to
-    #' `"none"`.
+    #' @param file The file name (character) of the `.zarr` file. If this file
+    #'   already exits, other arguments must be `NULL`.
+    #' @param X See the `X` slot in [AnnData-usage]
+    #' @param layers See the `layers` slot in [AnnData-usage]
+    #' @param obs See the `obs` slot in [AnnData-usage]
+    #' @param var See the `var` slot in [AnnData-usage]
+    #' @param obsm See the `obsm` slot in [AnnData-usage]
+    #' @param varm See the `varm` slot in [AnnData-usage]
+    #' @param obsp See the `obsp` slot in [AnnData-usage]
+    #' @param varp See the `varp` slot in [AnnData-usage]
+    #' @param uns See the `uns` slot in [AnnData-usage]
+    #' @param shape Shape tuple (e.g. `c(n_obs, n_vars)`). Can be provided if
+    #'   both `X` or `obs` and `var` are not provided.
+    #' @param mode The mode to open the Zarr file. See [as_ZarrAnnData()] for
+    #'   details
+    #' @param compression The compression algorithm to use. See
+    #'   [as_ZarrAnnData()] for details
     #'
     #' @details
-    #' The constructor creates a new HDF5 AnnData interface object. This can
-    #' either be used to either connect to an existing `.h5ad` file or to
-    #' create a new one. To create a new file both `obs_names` and `var_names`
-    #' must be specified. In both cases, any additional slots provided will be
-    #' set on the created object. This will cause data to be overwritten if the
-    #' file already exists.
-    initialize = function(store,
-                          # obs_names = NULL,
-                          # var_names = NULL,
-                          X = NULL,
-                          obs = NULL,
-                          var = NULL,
-                          layers = NULL,
-                          obsm = NULL,
-                          varm = NULL,
-                          obsp = NULL,
-                          varp = NULL,
-                          uns = NULL,
-                          shape = NULL,
-                          mode = c("r", "r+", "a", "w", "w-", "x"),
-                          compression = c("none", "gzip", "lzf")) {
-      if (!requireNamespace("pizzarr", quietly = TRUE)) {
-        stop("The Zarr interface requires the 'pizzarr' package to be installed")
-      }
+    #' The constructor creates a new Zarr `AnnData` interface object. This can
+    #' either be used to either connect to an existing `.zarr` file or to
+    #' create a new one. If any additional slot arguments are set an existing
+    #' file will be overwritten.
+    initialize = function(
+      file,
+      X = NULL,
+      obs = NULL,
+      var = NULL,
+      layers = NULL,
+      obsm = NULL,
+      varm = NULL,
+      obsp = NULL,
+      varp = NULL,
+      uns = NULL,
+      shape = NULL,
+      mode = c("a", "r", "r+", "w", "w-", "x"),
+      compression = c(
+        "none",
+        "gzip",
+        "blosc",
+        "zstd",
+        "lzma",
+        "bz2",
+        "zlib",
+        "lz4"
+      )
+    ) {
+      check_requires("ZarrAnnData", "Rarr", where = "Bioc")
 
-      # check arguments
       compression <- match.arg(compression)
       mode <- match.arg(mode)
 
-      # store compression for later use
       private$.compression <- compression
 
-      # if(length(root$get_attrs()$to_list()) == 0) {
-      if ((is.character(store) && !dir.exists(store)) || inherits(store, "MemoryStore")) {
-        # Check obs_names and var_names have been provided
-        # if (is.null(obs_names)) {
-        #   stop("When creating a new .h5ad file, `obs_names` must be defined.")
-        # }
-        # if (is.null(var_names)) {
-        #   stop("When creating a new .h5ad file, `var_names` must be defined.")
-        # }
+      is_readonly <- FALSE
 
-        # store private values
-        private$zarr_store <- store
-        # private$zarr_root <- root
-
-        # Determine initial obs and var
-        shape <- get_shape(obs, var, X, shape)
-        obs <- get_initial_obs(obs, X, shape)
-        var <- get_initial_var(var, X, shape)
-
-        # # Create an empty H5ad store using the provided obs/var names
-        # write_empty_zarr(store, obs_names, var_names, compression)
-
-        # Create an empty Zarr
-        write_empty_zarr(store, obs, var, compression)
-
-        # set other slots
-        if (!is.null(X)) {
-          self$X <- X
-        }
-        if (!is.null(layers)) {
-          self$layers <- layers
-        }
-        if (!is.null(obsm)) {
-          self$obsm <- obsm
-        }
-        if (!is.null(varm)) {
-          self$varm <- varm
-        }
-        if (!is.null(obsp)) {
-          self$obsp <- obsp
-        }
-        if (!is.null(varp)) {
-          self$varp <- varp
-        }
-        if (!is.null(uns)) {
-          self$uns <- uns
+      if (is.character(file)) {
+        if (mode == "a") {
+          if (dir.exists(file)) {
+            mode <- "r+"
+          } else {
+            mode <- "w-"
+          }
         }
 
-        # # Set private object slots
-        # private$zarr_store <- store
-        # private$.n_obs <- length(obs_names)
-        # private$.n_vars <- length(var_names)
-        # private$.obs_names <- obs_names
-        # private$.var_names <- var_names
-      } else {
-
-        # get root
-        root <- pizzarr::zarr_open_group(store, path = "/")
-
-        # Check the file is a valid H5AD
-        attrs <- root$get_attrs()$to_list()
-
-        if (!all(c("encoding-type", "encoding-version") %in% names(attrs))) {
-          stop(
-            "H5AD encoding information is missing. ",
-            "This file may have been created with Python anndata<0.8.0."
+        if (!dir.exists(file) && mode %in% c("r", "r+")) {
+          cli_abort(
+            paste(
+              "File {.file {file}} does not exist but mode is set to {.val {mode}}.",
+              "If you want to create a new file, use a different mode (e.g. 'w-').",
+              "See {.help read_zarr} or {.help write_zarr} for more information."
+            ),
+            call = rlang::caller_env()
           )
         }
 
-        # Set the file path
-        private$zarr_store <- store
-        private$zarr_root <- root
+        if (dir.exists(file) && mode %in% c("w-", "x")) {
+          cli_abort(
+            paste(
+              "File {.file {file}} already exists but mode is set to {.val {mode}}.",
+              "If you want to overwrite the file, use a different mode (e.g. 'w').",
+              "See {.help read_zarr} or {.help write_zarr} for more information."
+            ),
+            call = rlang::caller_env()
+          )
+        }
 
-        # If obs or var names have been provided update those
-        # if (!is.null(obs_names)) {
-        #   self$obs_names <- obs_names
-        # }
-        #
-        # if (!is.null(var_names)) {
-        #   self$var_names <- var_names
-        # }
+        if (mode %in% c("w", "w-", "x")) {
+          create_zarr(file)
+        } else if (mode == "r") {
+          is_readonly <- TRUE
+        }
+      } else {
+        cli_abort(
+          paste(
+            "{.arg file} must be a {.cls character}"
+          )
+        )
+      }
 
-        # assert other arguments are NULL
-        if (!is.null(obs)) {
-          stop("obs must be NULL when loading an existing zarr store")
-        }
-        if (!is.null(var)) {
-          stop("var must be NULL when loading an existing zarr store")
-        }
-        if (!is.null(X)) {
-          stop("X must be NULL when loading an existing zarr store")
-        }
-        if (!is.null(layers)) {
-          stop("layers must be NULL when loading an existing zarr store")
-        }
-        if (!is.null(obsm)) {
-          stop("obsm must be NULL when loading an existing zarr store")
-        }
-        if (!is.null(varm)) {
-          stop("varm must be NULL when loading an existing zarr store")
-        }
-        if (!is.null(obsp)) {
-          stop("obsp must be NULL when loading an existing zarr store")
-        }
-        if (!is.null(varp)) {
-          stop("varp must be NULL when loading an existing zarr store")
-        }
-        if (!is.null(uns)) {
-          stop("uns must be NULL when loading an existing zarr store")
+      if (!zarr_path_exists(file, "/")) {
+        cli_abort(
+          paste(
+            "{.arg file} must be a valid zarr store/file"
+          )
+        )
+      }
+
+      is_empty <- is_zarr_empty(file)
+
+      if (!is_readonly) {
+        if (!is_empty) {
+          cli_warn(
+            paste(
+              "An non-empty file is opened in read/write mode.",
+              "Use with caution, as this can lead to data corruption."
+            )
+          )
+        } else {
+          shape <- get_shape(obs, var, X, shape)
+          obs <- get_initial_obs(obs, X, shape)
+          var <- get_initial_var(var, X, shape)
+          write_empty_zarr(file, obs, var, compression)
         }
       }
+
+      # File is supposed to exist by now. Check if it is a valid Zarr file
+      attrs <- Rarr::read_zarr_attributes(file)
+      if (!all(c("encoding-type", "encoding-version") %in% names(attrs))) {
+        cli_abort(c(
+          "File {.file {file}} is not a valid AnnData-Zarr file."
+        ))
+      }
+
+      # Set the file path
+      private$.zarrobj <- file
+
+      if (is_readonly) {
+        # if any of these variables are not NULL, throw an error
+        are_null <- vapply(
+          .anndata_slots,
+          function(x) is.null(get(x)),
+          logical(1)
+        )
+        if (!all(are_null)) {
+          cli_abort(
+            paste0(
+              "Error trying to write data (",
+              paste(.anndata_slots[!are_null], collapse = ", "),
+              ") to a Zarr file opened in read-only mode."
+            )
+          )
+        }
+      } else {
+        for (slot in .anndata_slots) {
+          value <- get(slot)
+          if (!is.null(value)) {
+            self[[slot]] <- value
+          }
+        }
+      }
+
+      self
     },
 
-    #' @description Number of observations in the AnnData object
+    #' @description See the `n_obs` field in [AnnData-usage]
     n_obs = function() {
-      # if (is.null(private$.n_obs)) {
-      #   private$.n_obs <- length(self$obs_names)
-      # }
-      # private$.n_obs
       nrow(self$obs)
     },
 
-    #' @description Number of variables in the AnnData object
+    #' @description See the `n_vars` field in [AnnData-usage]
     n_vars = function() {
-      # if (is.null(private$.n_vars)) {
-      #   private$.n_vars <- length(self$var_names)
-      # }
-      # private$.n_vars
       nrow(self$var)
     }
   )
 )
 
-#' Convert an AnnData object to an HDF5AnnData object
+#' Convert an `AnnData` to an `ZarrAnnData`
 #'
-#' This function takes an AnnData object and converts it to an HDF5AnnData
-#' object, loading all fields into memory.
+#' Convert another `AnnData` object to an [`ZarrAnnData`] object
 #'
-#' @param adata An AnnData object to be converted to HDF5AnnData.
-#' @param file The filename (character) of the `.h5ad` file.
+#' @param adata An `AnnData` object to be converted to [`ZarrAnnData`]
+#' @param file The file name (character) of the `.zarr` file
 #' @param compression The compression algorithm to use when writing the
-#'  HDF5 file. Can be one of `"none"`, `"gzip"` or `"lzf"`. Defaults to
-#' `"none"`.
-#' @param mode The mode to open the HDF5 file.
+#'   Zarr file. Can be one of `"none"`, `"gzip"` or `"lzf"`. Defaults to
+#'   `"none"`.
+#' @param mode The mode to open the Zarr file:
 #'
-#'   * `a` creates a new file or opens an existing one for read/write.
-#'   * `r` opens an existing file for reading.
-#'   * `r+` opens an existing file for read/write.
-#'   * `w` creates a file, truncating any existing ones.
-#'   * `w-`/`x` are synonyms, creating a file and failing if it already exists.
+#'   * `a` creates a new file or opens an existing one for read/write
+#'   * `r` opens an existing file for reading
+#'   * `r+` opens an existing file for read/write
+#'   * `w` creates a file, truncating any existing ones
+#'   * `w-`/`x` are synonyms, creating a file and failing if it already exists
 #'
-#' @return An HDF5AnnData object with the same data as the input AnnData
+#' @return An [`ZarrAnnData`] object with the same data as the input `AnnData`
 #'   object.
+#' @keywords internal
 #'
-#' @noRd
+#' @family object converters
 #'
-#' @examples
-#' ad <- AnnData(
-#'   X = matrix(1:5, 3L, 5L),
-#'   layers = list(
-#'     A = matrix(5:1, 3L, 5L),
-#'     B = matrix(letters[1:5], 3L, 5L)
-#'   ),
-#'   obs = data.frame(cell = 1:3),
-#'   var = data.frame(gene = 1:5),
-#'   obs_names = LETTERS[1:3],
-#'   var_names = letters[1:5]
-#' )
-#' to_HDF5AnnData(ad, "test.h5ad")
-#' # remove file
-#' file.remove("test.h5ad")
-to_ZarrAnnData <- function(adata,
-                           store,
-                           compression = c("none", "gzip", "lzf"),
-                           mode = c("w-", "r", "r+", "a", "w", "x")) {
-  stopifnot(
-    inherits(adata, "AbstractAnnData")
-  )
+# nolint start: object_name_linter
+as_ZarrAnnData <- function(
+  # nolint end: object_name_linter
+  adata,
+  file,
+  compression = c(
+    "none",
+    "gzip",
+    "blosc",
+    "zstd",
+    "lzma",
+    "bz2",
+    "zlib",
+    "lz4"
+  ),
+  mode = c("w-", "r", "r+", "a", "w", "x")
+) {
+  if (!(inherits(adata, "AbstractAnnData"))) {
+    cli_abort(
+      "{.arg adata} must be a {.cls AbstractAnnData} but has class {.cls {class(adata)}}"
+    )
+  }
+
+  mode <- match.arg(mode)
   ZarrAnnData$new(
-    store = store,
+    file = file,
     X = adata$X,
     obs = adata$obs,
     var = adata$var,
     obsm = adata$obsm,
     varm = adata$varm,
-    # obs_names = adata$obs_names,
-    # var_names = adata$var_names,
     layers = adata$layers,
     obsp = adata$obsp,
     varp = adata$varp,
     uns = adata$uns,
-    compression = compression,
     shape = adata$shape(),
-    mode = mode
+    mode = mode,
+    compression = compression
   )
 }

@@ -1,100 +1,108 @@
 .abstract_function <- function(fun_name = NA_character_) {
-  fun_name <- if (is.na(fun_name)) "This function" else fun_name
-  stop(fun_name, " is an abstract function.")
+  fun_str <- if (is.na(fun_name)) {
+    "This function"
+  } else {
+    "{.fun {fun_name}}"
+  }
+  cli_abort(
+    paste(fun_str, "is an abstract function."),
+    call = rlang::caller_env()
+  )
 }
 
-#' @title AbstractAnnData
+.anndata_slots <- c(
+  "X",
+  "obs",
+  "var",
+  "uns",
+  "obsm",
+  "varm",
+  "layers",
+  "obsp",
+  "varp"
+)
+
+#' @title Abstract AnnData class
 #'
 #' @description
-#'   Abstract [R6][R6::R6Class] class representing an AnnData
-#'   object. Defines the interface.
-#' @importFrom R6 R6Class
+#' This class is an abstract representation of an `AnnData` object. It is
+#' intended to be used as a base class for concrete implementations of
+#' `AnnData` objects, such as [InMemoryAnnData] or [HDF5AnnData].
 #'
-#' @noRd
-AbstractAnnData <- R6::R6Class("AbstractAnnData", # nolint
+#' See [AnnData-usage] for details on creating and using `AnnData` objects.
+#'
+#' @return An `AbstractAnnData` object
+#'
+#' @seealso [AnnData-usage] for details on creating and using `AnnData` objects
+#'
+#' @family AnnData classes
+AbstractAnnData <- R6::R6Class(
+  "AbstractAnnData",
   active = list(
-    #' @field X NULL or an observation x variable matrix (without
-    #'   dimnames) consistent with the number of rows of `obs` and `var`.
+    #' @field X See [AnnData-usage]
     X = function(value) {
       .abstract_function("ad$X")
     },
-    #' @field layers The layers slot. Must be NULL or a named list
-    #'   with with all elements having the dimensions consistent with
-    #'   `obs` and `var`.
+    #' @field layers See [AnnData-usage]
     layers = function(value) {
       .abstract_function("ad$layers")
     },
-    #' @field obs A `data.frame` with columns containing information
-    #'   about observations. The number of rows of `obs` defines the
-    #'   observation dimension of the AnnData object.
+    #' @field obs See [AnnData-usage]
     obs = function(value) {
       .abstract_function("ad$obs")
     },
-    #' @field var A `data.frame` with columns containing information
-    #'   about variables. The number of rows of `var` defines the variable
-    #'   dimension of the AnnData object.
+    #' @field var See [AnnData-usage]
     var = function(value) {
       .abstract_function("ad$var")
     },
-    #' @field obs_names Either NULL or a vector of unique identifiers
-    #'   used to identify each row of `obs` and to act as an index into
-    #'   the observation dimension of the AnnData object. For
-    #'   compatibility with *R* representations, `obs_names` should be a
-    #'   character vector.
+    #' @field obs_names See [AnnData-usage]
     obs_names = function(value) {
       .abstract_function("ad$obs_names")
     },
-    #' @field var_names Either NULL or a vector of unique identifiers
-    #'   used to identify each row of `var` and to act as an index into
-    #'   the variable dimension of the AnnData object. For compatibility
-    #'   with *R* representations, `var_names` should be a character
-    #'   vector.
+    #' @field var_names See [AnnData-usage]
     var_names = function(value) {
       .abstract_function("ad$var_names")
     },
-    #' @field obsm The obsm slot. Must be `NULL` or a named list with
-    #'   with all elements having the same number of rows as `obs`.
+    #' @field obsm See [AnnData-usage]
     obsm = function(value) {
       .abstract_function("ad$obsm")
     },
-    #' @field varm The varm slot. Must be `NULL` or a named list with
-    #'   with all elements having the same number of rows as `var`.
+    #' @field varm See [AnnData-usage]
     varm = function(value) {
       .abstract_function("ad$varm")
     },
-    #' @field obsp The obsp slot. Must be `NULL` or a named list with
-    #'   with all elements having the same number of rows and columns as `obs`.
+    #' @field obsp See [AnnData-usage]
     obsp = function(value) {
       .abstract_function("ad$obsp")
     },
-    #' @field varp The varp slot. Must be `NULL` or a named list with
-    #'   with all elements having the same number of rows and columns as `var`.
+    #' @field varp See [AnnData-usage]
     varp = function(value) {
       .abstract_function("ad$varp")
     },
-    #' @field uns The uns slot. Must be `NULL` or a named list.
+    #' @field uns See [AnnData-usage]
     uns = function(value) {
       .abstract_function("ad$uns")
     }
   ),
   public = list(
-    #' @description Print a summary of the AnnData object. `print()`
-    #'   methods should be implemented so that they are not
-    #'   computationally expensive.
-    #' @param ... Optional arguments to print method.
+    #' @description See [AnnData-usage]
+    #'
+    #' @param ... Optional arguments to print method
     print = function(...) {
-      cat("AnnData object with n_obs \u00D7 n_vars = ", self$n_obs(), " \u00D7 ", self$n_vars(), "\n", sep = "")
+      # Get the class name (can be overridden by subclasses)
+      class_name <- private$.class_name()
 
-      for (attribute in c(
-        "obs",
-        "var",
-        "uns",
-        "obsm",
-        "varm",
-        "layers",
-        "obsp",
-        "varp"
-      )) {
+      cat(
+        class_name,
+        " object with n_obs \u00D7 n_vars = ",
+        self$n_obs(),
+        " \u00D7 ",
+        self$n_vars(),
+        "\n",
+        sep = ""
+      )
+
+      for (attribute in .anndata_slots[-1]) {
         key_fun <- self[[paste0(attribute, "_keys")]]
         keys <-
           if (!is.null(key_fun)) {
@@ -104,7 +112,9 @@ AbstractAnnData <- R6::R6Class("AbstractAnnData", # nolint
           }
         if (length(keys) > 0) {
           cat(
-            "    ", attribute, ": ",
+            "    ",
+            attribute,
+            ": ",
             paste(paste0("'", keys, "'"), collapse = ", "),
             "\n",
             sep = ""
@@ -113,78 +123,246 @@ AbstractAnnData <- R6::R6Class("AbstractAnnData", # nolint
       }
     },
 
-    #' @description Dimensions (observations x variables) of the AnnData object.
+    #' @description See [AnnData-usage]
     shape = function() {
       c(
         self$n_obs(),
         self$n_vars()
       )
     },
-    #' @description Number of observations in the AnnData object.
+    #' @description See [AnnData-usage]
     n_obs = function() {
       nrow(self$obs)
     },
-    #' @description Number of variables in the AnnData object.
+    #' @description See [AnnData-usage]
     n_vars = function() {
       nrow(self$var)
     },
-    #' @description Keys ('column names') of `obs`.
+    #' @description See [AnnData-usage]
     obs_keys = function() {
       names(self$obs)
     },
-    #' @description Keys ('column names') of `var`.
+    #' @description See [AnnData-usage]
     var_keys = function() {
       names(self$var)
     },
-    #' @description Keys (element names) of `layers`.
+    #' @description See [AnnData-usage]
     layers_keys = function() {
       names(self$layers)
     },
-    #' @description Keys (element names) of `obsm`.
+    #' @description See [AnnData-usage]
     obsm_keys = function() {
       names(self$obsm)
     },
-    #' @description Keys (element names) of `varm`.
+    #' @description See [AnnData-usage]
     varm_keys = function() {
       names(self$varm)
     },
-    #' @description Keys (element names) of `obsp`.
+    #' @description See [AnnData-usage]
     obsp_keys = function() {
       names(self$obsp)
     },
-    #' @description Keys (element names) of `varp`.
+    #' @description See [AnnData-usage]
     varp_keys = function() {
       names(self$varp)
     },
-    #' @description Convert to SingleCellExperiment
-    to_SingleCellExperiment = function() {
-      to_SingleCellExperiment(self)
+    #' @description See [AnnData-usage]
+    uns_keys = function() {
+      names(self$uns)
     },
-    #' @description Convert to Seurat
-    to_Seurat = function() {
-      to_Seurat(self)
+    #' @description
+    #' Convert to `SingleCellExperiment`
+    #'
+    #' See [as_SingleCellExperiment()] for more details on the conversion
+    #'
+    #' @param x_mapping See [as_SingleCellExperiment()]
+    #' @param assays_mapping See [as_SingleCellExperiment()]
+    #' @param colData_mapping See [as_SingleCellExperiment()]
+    #' @param rowData_mapping See [as_SingleCellExperiment()]
+    #' @param reducedDims_mapping See [as_SingleCellExperiment()]
+    #' @param colPairs_mapping See [as_SingleCellExperiment()]
+    #' @param rowPairs_mapping See [as_SingleCellExperiment()]
+    #' @param metadata_mapping See [as_SingleCellExperiment()]
+    #'
+    #' @return A `SingleCellExperiment` object
+    # nolint start: object_name_linter
+    as_SingleCellExperiment = function(
+      x_mapping = NULL,
+      assays_mapping = TRUE,
+      colData_mapping = TRUE,
+      rowData_mapping = TRUE,
+      reducedDims_mapping = TRUE,
+      colPairs_mapping = TRUE,
+      rowPairs_mapping = TRUE,
+      metadata_mapping = TRUE
+    ) {
+      # nolint end: object_name_linter
+      as_SingleCellExperiment(
+        self,
+        x_mapping = x_mapping,
+        assays_mapping = assays_mapping,
+        colData_mapping = colData_mapping,
+        rowData_mapping = rowData_mapping,
+        reducedDims_mapping = reducedDims_mapping,
+        colPairs_mapping = colPairs_mapping, # nolint
+        rowPairs_mapping = rowPairs_mapping, # nolint
+        metadata_mapping = metadata_mapping
+      )
     },
-    #' @description Convert to an InMemory AnnData
-    to_InMemoryAnnData = function() {
-      to_InMemoryAnnData(self)
+    #' @description
+    #' Convert to `Seurat`
+    #'
+    #' See [as_Seurat()] for more details on the conversion
+    #'
+    #' @param assay_name See [as_Seurat()]
+    #' @param x_mapping See [as_Seurat()]
+    #' @param layers_mapping See [as_Seurat()]
+    #' @param object_metadata_mapping See [as_Seurat()]
+    #' @param assay_metadata_mapping See [as_Seurat()]
+    #' @param reduction_mapping See [as_Seurat()]
+    #' @param graph_mapping See [as_Seurat()]
+    #' @param misc_mapping See [as_Seurat()]
+    #'
+    #' @return A `Seurat` object
+    as_Seurat = function(
+      assay_name = "RNA",
+      x_mapping = NULL,
+      layers_mapping = TRUE,
+      object_metadata_mapping = TRUE,
+      assay_metadata_mapping = TRUE,
+      reduction_mapping = TRUE,
+      graph_mapping = TRUE,
+      misc_mapping = TRUE
+    ) {
+      as_Seurat(
+        self,
+        assay_name = assay_name,
+        x_mapping = x_mapping,
+        layers_mapping = layers_mapping,
+        object_metadata_mapping = object_metadata_mapping,
+        assay_metadata_mapping = assay_metadata_mapping,
+        reduction_mapping = reduction_mapping,
+        graph_mapping = graph_mapping,
+        misc_mapping = misc_mapping
+      )
     },
-    #' @description Convert to an HDF5 Backed AnnData
-    #' @param file The path to the HDF5 file
-    #' @param compression The compression algorithm to use when writing the
-    #' HDF5 file. Can be one of `"none"`, `"gzip"` or `"lzf"`. Defaults to
-    #' `"none"`.
-    #' @param mode The mode to open the HDF5 file.
-    #'  * `a` creates a new file or opens an existing one for read/write.
-    #' * `r+` opens an existing file for read/write.
-    #' * `w` creates a file, truncating any existing ones
-    #' * `w-`/`x` are synonyms creating a file and failing if it already exists.
-    #' @return An HDF5AnnData object
-    to_HDF5AnnData = function(file,
-                              compression = c("none", "gzip", "lzf"),
-                              mode = c("w-", "r", "r+", "a", "w", "x")) {
-      to_HDF5AnnData(
+    #' @description
+    #' Convert to an [`InMemoryAnnData`]
+    #'
+    #' See [as_InMemoryAnnData()] for more details on the conversion
+    #'
+    #' @return An [InMemoryAnnData] object
+    as_InMemoryAnnData = function() {
+      as_InMemoryAnnData(self)
+    },
+    #' @description
+    #' Convert to a [`ReticulateAnnData`]
+    #'
+    #' See [as_ReticulateAnnData()] for more details on the conversion
+    #'
+    #' @return A [ReticulateAnnData] object
+    as_ReticulateAnnData = function() {
+      as_ReticulateAnnData(self)
+    },
+    #' @description
+    #' Convert to an [`HDF5AnnData`]
+    #'
+    #' See [as_HDF5AnnData()] for more details on the conversion
+    #'
+    #' @param file See [as_HDF5AnnData()]
+    #' @param compression See [as_HDF5AnnData()]
+    #' @param chunk_size See [as_HDF5AnnData()]
+    #' @param mode See [as_HDF5AnnData()]
+    #'
+    #' @return An [`HDF5AnnData`] object
+    as_HDF5AnnData = function(
+      file,
+      compression = c("none", "gzip", "lzf"),
+      chunk_size = "auto",
+      mode = c("w-", "r", "r+", "a", "w", "x")
+    ) {
+      as_HDF5AnnData(
         adata = self,
         file = file,
+        compression = compression,
+        chunk_size = chunk_size,
+        mode = mode
+      )
+    },
+    #' @description
+    #' Convert to a [`ZarrAnnData`]
+    #'
+    #' See [as_ZarrAnnData()] for more details on the conversion
+    #'
+    #' @param file See [as_ZarrAnnData()]
+    #' @param compression See [as_ZarrAnnData()]
+    #' @param mode See [as_ZarrAnnData()]
+    #'
+    #' @return A [`ZarrAnnData`] object
+    as_ZarrAnnData = function(
+      file,
+      compression = c("none", "gzip"),
+      mode = c("w-", "r", "r+", "a", "w", "x")
+    ) {
+      as_ZarrAnnData(
+        adata = self,
+        file = file,
+        compression = compression,
+        mode = mode
+      )
+    },
+    #' @description
+    #' Write the `AnnData` object to an H5AD file
+    #'
+    #' See [write_h5ad()] for details
+    #'
+    #' @param path See [write_h5ad()]
+    #' @param compression See [write_h5ad()]
+    #' @param chunk_size See [write_h5ad()]
+    #' @param mode See [write_h5ad()]
+    #'
+    #' @return `path` invisibly
+    write_h5ad = function(
+      path,
+      compression = c("none", "gzip", "lzf"),
+      chunk_size = "auto",
+      mode = c("w-", "r", "r+", "a", "w", "x")
+    ) {
+      write_h5ad(
+        object = self,
+        path,
+        compression = compression,
+        chunk_size = chunk_size,
+        mode = mode
+      )
+    },
+    #' @description
+    #' Write the `AnnData` object to a Zarr file
+    #'
+    #' See [write_zarr()] for details
+    #'
+    #' @param path See [write_zarr()]
+    #' @param compression See [write_zarr()]
+    #' @param mode See [write_zarr()]
+    #'
+    #' @return `path` invisibly
+    write_zarr = function(
+      path,
+      compression = c(
+        "none",
+        "gzip",
+        "blosc",
+        "zstd",
+        "lzma",
+        "bz2",
+        "zlib",
+        "lz4"
+      ),
+      mode = c("w-", "r", "r+", "a", "w", "x")
+    ) {
+      write_zarr(
+        object = self,
+        path,
         compression = compression,
         mode = mode
       )
@@ -192,66 +370,150 @@ AbstractAnnData <- R6::R6Class("AbstractAnnData", # nolint
   ),
   private = list(
     # @description `.validate_aligned_array()` checks that dimensions are
-    #   consistent with the anndata object.
-    # @param mat A matrix to validate
-    # @param label Must be `"X"` or `"layer[[...]]"` where `...` is
-    #   the name of a layer.
-    # @param shape Expected dimensions of matrix
-    # @param expected_rownames
-    # @param excepted_colnames
-    .validate_aligned_array = function(mat, label, shape, expected_rownames = NULL, expected_colnames = NULL) {
+    #   consistent with the AnnData object.
+    #
+    # @param mat A matrix (or data frame) to validate
+    # @param label Must be `"X"` or `"<<slot>>[[...]]"` where `<<slot>>` is the
+    #   name of an AnnData slot and `...` is an item in that slot
+    # @param shape Expected dimensions of `mat`, if shorter than `dim(mat)`,
+    #   only the first `length(shape)` dimensions are checked
+    # @param expected_rownames Expected row names
+    # @param expected_colnames Expected column names
+    # @param strip_rownames Whether to strip row names after validation
+    # @param strip_colnames Whether to strip column names after validation
+    # @param warn_rownames Whether to warn if row names are present but can not
+    #   be written
+    # @param warn_colnames Whether to warn if column names are present but can
+    #   not be written
+    #
+    # @return The validated matrix
+    .validate_aligned_array = function(
+      mat,
+      label,
+      shape,
+      expected_rownames = NULL,
+      expected_colnames = NULL,
+      strip_rownames = TRUE,
+      strip_colnames = TRUE,
+      warn_rownames = FALSE,
+      warn_colnames = FALSE
+    ) {
       if (is.null(mat)) {
         return(mat)
       }
       mat_dims <- dim(mat)
-      for (i in seq_along(shape)) {
-        expected_dim <- shape[i]
-        found_dim <- mat_dims[i]
-        if (found_dim != expected_dim) {
-          stop("dim(", label, ")[", i, "] should have shape: ", expected_dim, ", found: ", found_dim, ".")
+
+      if (
+        length(shape) > length(mat_dims) ||
+          any(shape != mat_dims[seq_along(shape)])
+      ) {
+        cli_abort(
+          c(
+            "Unexpected shape for {.field {label}}",
+            "i" = paste0(
+              "Expected [",
+              paste(shape, collapse = ", "),
+              "], got [",
+              paste(mat_dims, collapse = ", "),
+              "]"
+            )
+          ),
+          call = rlang::caller_env()
+        )
+      }
+
+      if (!is.null(expected_rownames) && has_row_names(mat)) {
+        if (!identical(rownames(mat), expected_rownames)) {
+          cli_abort(
+            c(
+              "{.code rownames({label})} is not as expected",
+              "i" = "Expected row names: {style_vec(expected_rownames)}",
+              "i" = "Provided row names: {style_vec(rownames(mat))}"
+            ),
+            call = rlang::caller_env()
+          )
         }
       }
-      if (!is.null(expected_rownames) & !has_row_names(mat)) {
-        if (!identical(rownames(mat), expected_rownames)) {
-          stop("rownames(", label, ") should be the same as expected_rownames")
-        }
+      # Strip rownames for storage if requested
+      if (strip_rownames) {
         rownames(mat) <- NULL
       }
+
       if (!is.null(expected_colnames) & !is.null(colnames(mat))) {
         if (!identical(colnames(mat), expected_colnames)) {
-          stop("colnames(", label, ") should be the same as expected_colnames")
+          cli_abort(
+            c(
+              "{.code colnames({label})} is not as expected",
+              "i" = "Expected column names: {style_vec(expected_colnames)}",
+              "i" = "Provided column names: {style_vec(colnames(mat))}"
+            ),
+            call = rlang::caller_env()
+          )
         }
+      }
+
+      # Strip colnames for storage if requested
+      if (strip_colnames) {
         colnames(mat) <- NULL
       }
+
+      warn_matrix_dimnames_not_writeable(
+        mat,
+        label,
+        to_object = self,
+        rows = warn_rownames,
+        cols = warn_colnames
+      )
 
       mat
     },
     # @description `.validate_aligned_mapping()` checks for named lists and
     #   correct dimensions on elements.
+    #
     # @param collection A named list of 0 or more matrix elements with
     #   whose entries will be validated
     # @param label The label of the collection, used for error messages
-    # @param shape Expected dimensions of arrays. Arrays may have more dimensions than specified here
+    # @param shape Expected dimensions of items in `collection`
     # @param expected_rownames Expected row names
     # @param expected_colnames Expected column names
-    .validate_aligned_mapping = function(collection, label, shape, expected_rownames = NULL, expected_colnames = NULL) {
+    # @param strip_rownames Whether to strip row names after validation
+    # @param strip_colnames Whether to strip column names after validation
+    # @param warn_rownames Whether to warn if row names are present but can not
+    #   be written
+    # @param warn_colnames Whether to warn if column names are present but can
+    #   not be written
+    #
+    # @return The validated mapping
+    .validate_aligned_mapping = function(
+      collection,
+      label,
+      shape,
+      expected_rownames = NULL,
+      expected_colnames = NULL,
+      strip_rownames = TRUE,
+      strip_colnames = TRUE,
+      warn_rownames = FALSE,
+      warn_colnames = FALSE
+    ) {
       if (is.null(collection)) {
         return(collection)
       }
 
+      collection <- private$.validate_named_list(collection, label)
       collection_names <- names(collection)
-      if (!is.list(collection) || ((length(collection) != 0) && is.null(collection_names))) {
-        stop(paste0(label, " must be a named list, was ", class(collection)))
-      }
 
       for (mtx_name in collection_names) {
         collection_name <- paste0(label, "[['", mtx_name, "']]")
-        private$.validate_aligned_array(
+        collection[[mtx_name]] <- private$.validate_aligned_array(
           collection[[mtx_name]],
           collection_name,
           shape = shape,
           expected_rownames = expected_rownames,
-          expected_colnames = expected_colnames
+          expected_colnames = expected_colnames,
+          strip_rownames = strip_rownames,
+          strip_colnames = strip_colnames,
+          warn_rownames = warn_rownames,
+          warn_colnames = warn_colnames
         )
       }
 
@@ -260,14 +522,41 @@ AbstractAnnData <- R6::R6Class("AbstractAnnData", # nolint
 
     # @description `.validate_named_list()` checks for whether a value
     #   is NULL or a named list and throws an error if it is not.
-    .validate_named_list = function(collection, label) {
+    #
+    # @param collection A collection to validate
+    # @param label The label of the collection, used for error messages
+    # @param warn_matrix_dimnames Whether to warn if matrix dim names are
+    #   present but cannot be written for items in `collection`
+    #
+    # @return The validated named list
+    .validate_named_list = function(
+      collection,
+      label,
+      warn_matrix_dimnames = FALSE
+    ) {
       if (is.null(collection)) {
         return(collection)
       }
 
       collection_names <- names(collection)
-      if (!is.list(collection) || ((length(collection) != 0) && is.null(collection_names))) {
-        stop(paste0(label, " must be a named list, was ", class(collection)))
+      if (
+        !is.list(collection) ||
+          ((length(collection) != 0) && is.null(collection_names))
+      ) {
+        cli_abort(
+          "{.field {label}} must be a named {.cls list}, got {.cls {class(collection)}}",
+          call = rlang::caller_env()
+        )
+      }
+
+      if (warn_matrix_dimnames) {
+        purrr::walk2(collection, names(collection), \(.item, .item_name) {
+          warn_matrix_dimnames_not_writeable(
+            .item,
+            label = paste0(label, "[['", .item_name, "']]"),
+            to_object = self
+          )
+        })
       }
 
       collection
@@ -275,15 +564,13 @@ AbstractAnnData <- R6::R6Class("AbstractAnnData", # nolint
 
     # @description `.validate_obsvar_dataframe()` checks that the
     #   object is a data.frame and removes explicit dimnames.
+    #
     # @param df A data frame to validate. Should be an obs or a var.
     # @param label Must be `"obs"` or `"var"`
     .validate_obsvar_dataframe = function(df, label = c("obs", "var")) {
       label <- match.arg(label)
 
-      expected_nrow <- switch(label,
-        obs = self$n_obs(),
-        var = self$n_vars()
-      )
+      expected_nrow <- switch(label, obs = self$n_obs(), var = self$n_vars())
 
       if (is.null(df)) {
         # create empty data frame
@@ -291,15 +578,20 @@ AbstractAnnData <- R6::R6Class("AbstractAnnData", # nolint
       }
 
       if (!is.data.frame(df)) {
-        stop(label, " should be a data frame")
+        cli_abort(
+          "{.field label} must be a {.cls data.frame}, got {.cls {class(df)}}",
+          call = rlang::caller_env()
+        )
       }
 
       if (nrow(df) != expected_nrow) {
-        stop(wrap_message(
-          "nrow(df) should match the number of ", label, ". ",
-          "Expected nrow: ", expected_nrow, ". ",
-          "Observed nrow: ", nrow(df), "."
-        ))
+        cli_abort(
+          paste(
+            "{.code nrow({label})} should equal {.val {expected_nrow}},",
+            "got {.val {nrow(df)}}"
+          ),
+          call = rlang::caller_env()
+        )
       }
 
       df
@@ -307,13 +599,21 @@ AbstractAnnData <- R6::R6Class("AbstractAnnData", # nolint
 
     # @description `.validate_obsvar_names()` checks that `*_names()`
     #   are NULL or consistent with the dimensions of `obs` or `var`.
+    #
     # @param names A vector to validate
     # @param label Must be `"obs"` or `"var"`
-    .validate_obsvar_names = function(names, label = c("obs", "var"), check_length = TRUE) {
+    .validate_obsvar_names = function(
+      names,
+      label = c("obs", "var"),
+      check_length = TRUE
+    ) {
       label <- match.arg(label)
 
       if (is.null(names)) {
-        stop(wrap_message(label, "_names should be defined."))
+        cli_abort(
+          "{.field {label}_names} should be defined",
+          call = rlang::caller_env()
+        )
       }
 
       # only check whether sizes match if the obsvar names has already been defined
@@ -323,13 +623,110 @@ AbstractAnnData <- R6::R6Class("AbstractAnnData", # nolint
 
         if (length(names) != expected_len) {
           size_check_label <- if (label == "obs") "n_obs" else "n_vars"
-          stop(wrap_message(
-            "length(", label, "_names) should be the same as ad$", size_check_label, "()"
-          ))
+          cli_abort(
+            paste(
+              "{.code length({label}_names)} should match",
+              "{.code ad${size_check_label}}"
+            ),
+            call = rlang::caller_env()
+          )
         }
       }
 
       names
+    },
+
+    # @description Add dimnames to matrices/data.frames for user access
+    # @param mat A matrix or data.frame to add dimnames to
+    # @param slot_type The type of slot: "X", "layers", "obsm", "varm", "obsp", "varp"
+    .add_matrix_dimnames = function(
+      mat,
+      slot_type = c("X", "layers", "obsm", "varm", "obsp", "varp")
+    ) {
+      if (is.null(mat)) {
+        return(mat)
+      }
+
+      slot_type <- match.arg(slot_type)
+
+      switch(
+        slot_type,
+        "X" = {
+          dimnames(mat) <- list(self$obs_names, self$var_names)
+        },
+        "layers" = {
+          dimnames(mat) <- list(self$obs_names, self$var_names)
+        },
+        "obsm" = {
+          rownames(mat) <- self$obs_names
+        },
+        "varm" = {
+          rownames(mat) <- self$var_names
+        },
+        "obsp" = {
+          dimnames(mat) <- list(self$obs_names, self$obs_names)
+        },
+        "varp" = {
+          dimnames(mat) <- list(self$var_names, self$var_names)
+        }
+      )
+
+      mat
+    },
+
+    # @description Add dimnames to mapping lists (obsm, varm, obsp, varp, layers)
+    # @param mapping_list A named list of matrices to add dimnames to
+    # @param slot_type The type of slot: "layers", "obsm", "varm", "obsp", "varp"
+    .add_mapping_dimnames = function(
+      mapping_list,
+      slot_type = c("layers", "obsm", "varm", "obsp", "varp")
+    ) {
+      if (is.null(mapping_list)) {
+        return(mapping_list)
+      }
+
+      slot_type <- match.arg(slot_type)
+
+      for (i in seq_along(mapping_list)) {
+        if (!is.null(mapping_list[[i]])) {
+          mapping_list[[i]] <- private$.add_matrix_dimnames(
+            mapping_list[[i]],
+            slot_type
+          )
+        }
+      }
+
+      mapping_list
+    },
+
+    # @description Add rownames to obs/var data.frames
+    # @param df A data.frame to add rownames to
+    # @param slot_type The type of slot: "obs" or "var"
+    .add_obsvar_dimnames = function(df, slot_type = c("obs", "var")) {
+      if (is.null(df)) {
+        return(df)
+      }
+
+      slot_type <- match.arg(slot_type)
+
+      switch(
+        slot_type,
+        "obs" = {
+          rownames(df) <- self$obs_names
+        },
+        "var" = {
+          rownames(df) <- self$var_names
+        }
+      )
+
+      df
+    },
+
+    # @description Get the class name for printing
+    # Default implementation returns the first class name
+    # Can be overridden by subclasses (e.g., AnnDataView)
+    .class_name = function() {
+      class(self)[1]
     }
   )
 )

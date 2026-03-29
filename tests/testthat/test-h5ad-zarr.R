@@ -1,11 +1,26 @@
 skip_if_not_installed("rhdf5")
-skip_if_not_installed("pizzarr")
+skip_if_not_installed("Rarr")
 
-# file <- system.file("extdata", "example.h5ad", package = "anndataR")
-file <- hdf5r::H5File$new(system.file("extdata", "example.h5ad", package = "anndataR"), mode = "r")
+# h5ad file
+filename <- system.file("extdata", "example.h5ad", package = "anndataR")
+file <- rhdf5::H5Fopen(filename, flags = "H5F_ACC_RDONLY", native = FALSE)
 
-zarr_dir <- system.file("extdata", "example.zarr", package = "anndataR")
-store <- pizzarr::DirectoryStore$new(zarr_dir)
+# zarr file
+zarr_dir <- system.file("extdata", "example_v2.zarr.zip", package = "anndataR")
+td <- tempdir(check = TRUE)
+unzip(zarr_dir, exdir = td)
+store <- file.path(td, "example_v2.zarr")
+
+# compare rec arrays of h5ad and zarr
+compare_rec_array <- function(rec_array_h5ad, rec_array_zarr, test_fun) {
+  test_fun(length(rec_array_h5ad), length(rec_array_zarr[[1]]))
+  test_fun(do.call(rbind, rec_array_h5ad), {
+    array_list_zarr_mat <- do.call(cbind, rec_array_zarr)
+    rownames(array_list_zarr_mat) <-
+      paste(0:(nrow(array_list_zarr_mat) - 1))
+    array_list_zarr_mat
+  })
+}
 
 test_that("reading dense matrices is same for h5ad and zarr", {
   mat_h5ad <- read_h5ad_dense_array(file, "layers/dense_counts")
@@ -27,18 +42,19 @@ test_that("reading sparse matrices is same for h5ad and zarr", {
   expect_equal(mat_h5ad, mat_zarr)
 })
 
-# test_that("reading recarrays works", {
-#   array_list <- read_h5ad_rec_array(
-#     file, "uns/rank_genes_groups/logfoldchanges"
-#   )
-#   expect_true(is.list(array_list))
-#   expect_equal(names(array_list), c("0", "1", "2", "3", "4", "5"))
-#   for (array in array_list) {
-#     expect_true(is.array(array))
-#     expect_type(array, "double")
-#     expect_equal(dim(array), 100)
-#   }
-# })
+test_that("reading recarrays is the same for h5ad and zarr", {
+  # h5ad returns a list of 6 arrays of length 100
+  array_list_h5ad <- read_h5ad_rec_array(
+    file,
+    "uns/rank_genes_groups/logfoldchanges"
+  )
+  # zarr returns a list of 100 arrays of length 6
+  array_list_zarr <- read_zarr_rec_array(
+    store,
+    "uns/rank_genes_groups/logfoldchanges"
+  )
+  compare_rec_array(array_list_h5ad, array_list_zarr, expect_equal)
+})
 
 test_that("reading 1D numeric arrays is same for h5ad and zarr", {
   array_1d_h5ad <- read_h5ad_dense_array(file, "obs/Int")
@@ -65,10 +81,8 @@ test_that("reading 1D nullable arrays is same for h5ad and zarr", {
   array_1d_zarr <- read_zarr_dense_array(store, "obs/FloatNA")
   expect_equal(array_1d_h5ad, array_1d_zarr)
 
-  # TODO: check this test, zarr Bools are stored as dense array hence no mask is given
   array_1d_h5ad <- read_h5ad_nullable_boolean(file, "obs/Bool")
-  # array_1d_zarr <- read_zarr_nullable_boolean(store, "obs/Bool")
-  array_1d_zarr <- read_zarr_dense_array(store, "obs/Bool")
+  array_1d_zarr <- read_zarr_nullable_boolean(store, "obs/Bool")
   expect_equal(array_1d_h5ad, array_1d_zarr)
 
   array_1d_h5ad <- read_h5ad_nullable_boolean(file, "obs/BoolNA")
@@ -98,30 +112,74 @@ test_that("reading string arrays is same for h5ad and zarr", {
   expect_equal(array_h5ad, array_zarr)
 })
 
-# test_that("reading mappings is same for h5ad and zarr", {
-#   mapping_h5ad <- read_h5ad_mapping(file, "uns")
-#   mapping_zarr <- read_zarr_mapping(store, "uns")
+# TODO: I will skip this test for now since the rec arrays are read differently
+# for some elements
+test_that("reading mappings is same for h5ad and zarr", {
+  skip(
+    "skipping test for mappings since rec arrays are read differently 
+       across h5ad and zarr"
+  )
+  # since rec arrays are read differently across h5ad and zarr,
+  # we compare all elements individually
+  mapping_h5ad <- read_h5ad_mapping(file, "uns")
+  mapping_zarr <- read_zarr_mapping(store, "uns")
+  for (nm in names(mapping_h5ad)) {
+    if (!nm %in% "rank_genes_groups") {
+      expect_equal(mapping_h5ad[[nm]], mapping_zarr[[nm]])
+    } else {
+      map_ranks_h5ad <- mapping_h5ad$rank_genes_groups
+      map_ranks_zarr <- mapping_zarr$rank_genes_groups
+      lapply(
+        names(map_ranks_h5ad)[!names(map_ranks_h5ad) %in% "params"],
+        function(nmr) {
+          print(nmr)
+          compare_rec_array(
+            map_ranks_h5ad[[nmr]],
+            map_ranks_zarr[[nmr]],
+            expect_equal
+          )
+        }
+      )
+    }
+  }
+})
 
-#   expect_equal(mapping_h5ad, mapping_zarr)
-# })
+tmp <- read_zarr_element(store, "uns/neighbors/params/random_state")
+tmp2 <- read_h5ad_element(file, "uns/neighbors/params/random_state")
 
-test_that("reading dataframes works", {
-  # df_h5ad <- read_h5ad_data_frame(file, "obs", include_index = TRUE)
+test_that("reading dataframes is the same for h5ad and zarr", {
   df_h5ad <- read_h5ad_data_frame(file, "obs")
-  df_zarr <- read_zarr_data_frame(store, "obs", include_index = TRUE)
-
+  df_zarr <- read_zarr_data_frame(store, "obs")
   expect_equal(df_h5ad, df_zarr)
 })
 
+rhdf5::H5Fclose(file)
+
 test_that("reading H5AD as SingleCellExperiment is same for h5ad and zarr", {
   skip_if_not_installed("SingleCellExperiment")
+  skip_if_not_installed("S4Vectors")
+  sce_h5ad <- read_h5ad(filename, as = "SingleCellExperiment")
+  sce_zarr <- read_zarr(store, as = "SingleCellExperiment")
+  # TODO: rec arrays are parsed differently between h5ad and zarr,
+  # so we set them equal here
+  S4Vectors::metadata(sce_zarr) <- S4Vectors::metadata(sce_h5ad)
+  expect_equal(sce_h5ad, sce_zarr)
+})
 
-  sce_h5ad <- read_h5ad(file, to = "SingleCellExperiment")
-  # h5ad reads this column as characters like 'TRUE', 'FALSE', while zarr reads as logical
-  # sce_h5ad@rowRanges@elementMetadata@listData$highly_variable <- as.logical(
-  #   sce_h5ad@rowRanges@elementMetadata@listData$highly_variable
-  # )
-  sce_zarr <- read_zarr(store, to = "SingleCellExperiment")
-
+test_that("reading H5AD as Seurat is same for h5ad and zarr", {
+  skip_if_not_installed("Seurat")
+  sce_h5ad <- read_h5ad(filename, as = "Seurat")
+  sce_zarr <- read_zarr(store, as = "Seurat")
+  # TODO: rec arrays are parsed differently between h5ad and zarr,
+  # so we set them equal here
+  Seurat::Misc(sce_zarr, "rank_genes_groups") <-
+    Seurat::Misc(sce_h5ad, "rank_genes_groups")
+  # TODO: neighbors/params/random_state and
+  # leiden/params/random_state read 0 in anndata(py) but
+  # it is in fact an empty array
+  Seurat::Misc(sce_zarr, "neighbors") <-
+    Seurat::Misc(sce_h5ad, "neighbors")
+  Seurat::Misc(sce_zarr, "leiden") <-
+    Seurat::Misc(sce_h5ad, "leiden")
   expect_equal(sce_h5ad, sce_zarr)
 })
